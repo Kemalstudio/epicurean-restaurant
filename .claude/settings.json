@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p ~/.claude/skills/design-taste-frontend)",
+      "Bash(cp \"C:/Users/KA/AppData/Local/Temp/claude/c--Users-KA-Desktop-epicurean-restaurant/f06f9753-449d-4297-aeee-276e3ab7ec76/scratchpad/taste-skill/skills/taste-skill/SKILL.md\" ~/.claude/skills/design-taste-frontend/)"
+    ]
+  }
+}
