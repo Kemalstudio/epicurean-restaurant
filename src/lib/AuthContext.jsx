@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       const localToken = appParams.token || localStorage.getItem('base44_access_token');
       
       try {
-        const response = await axios.get('http://192.168.200.207:5000/api/settings/public', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/settings/public`, {
           headers: {
             'X-App-Id': appParams.appId || 'epicurean-app',
             ...(localToken ? { 'Authorization': `Bearer ${localToken}` } : {})
