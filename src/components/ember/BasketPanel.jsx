@@ -121,11 +121,11 @@ export default function BasketPanel({ onCheckout, compact = false }) {
                     <p className="text-[16px] font-semibold leading-tight text-ember-navy">{item.product_name}</p>
                     {notes && <p className="mt-1 text-[14px] leading-snug text-black">{notes}</p>}
                     <div className="mt-2 flex items-center gap-2">
-                      <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('decrease_quantity')}><Minus className="h-3.5 w-3.5" /></button>
-                      <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('increase_quantity')}><Plus className="h-3.5 w-3.5" /></button>
+                      <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-ember-navy text-white relative after:absolute after:-inset-2 after:content-['']" aria-label={t('decrease_quantity')}><Minus className="h-3.5 w-3.5" /></button>
+                      <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-ember-navy text-white relative after:absolute after:-inset-2 after:content-['']" aria-label={t('increase_quantity')}><Plus className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
-                  <button type="button" onClick={() => removeItem(item.key)} className="flex h-[35px] w-[35px] shrink-0 items-center justify-center rounded-[6px] bg-[#8E8E8E] text-white transition-colors hover:bg-ember-red" aria-label={t('remove_item')}>
+                  <button type="button" onClick={() => removeItem(item.key)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-[#8E8E8E] text-white transition-colors hover:bg-ember-red" aria-label={t('remove_item')}>
                     <X className="h-5 w-5" strokeWidth={3} />
                   </button>
                 </li>
