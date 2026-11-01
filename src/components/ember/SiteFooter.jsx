@@ -35,7 +35,7 @@ function Subscribe() {
           placeholder="youremail@gmail.com" autoComplete="email"
           className="min-w-0 flex-1 rounded-pill bg-transparent pl-7 text-[15px] outline-none placeholder:text-black/60"
         />
-        <button type="submit" disabled={sending} className="btn-orange h-[59px] w-[130px] shrink-0 px-0 sm:w-[171px]">
+        <button type="submit" disabled={sending} className="btn-orange h-[59px] shrink-0 whitespace-nowrap px-5 text-[15px] sm:w-[171px] sm:px-0 sm:text-[16px]">
           {t('subscribe')}
         </button>
       </div>
