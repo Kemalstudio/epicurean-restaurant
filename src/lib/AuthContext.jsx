@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, API_URL } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import axios from 'axios';
 
@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
       const localToken = appParams.token || localStorage.getItem('base44_access_token');
       
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/settings/public`, {
+        const response = await axios.get(`${API_URL}/settings/public`, {
+          // Without a timeout an unreachable API address kept the splash screen forever
+          timeout: 8000,
           headers: {
             'X-App-Id': appParams.appId || 'epicurean-app',
             ...(localToken ? { 'Authorization': `Bearer ${localToken}` } : {})

@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// No VITE_API_URL -> the API is on the same host the site was opened from, port 5000.
+// Works for http://localhost:5173 and for a phone opening http://<this computer's LAN IP>:5173,
+// without hard-coding an IP that changes with the Wi-Fi network.
+export const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:5000/api`;
 const TOKEN_KEY = 'base44_access_token';
 
-const apiClient = axios.create({ baseURL: API_URL });
+// Timeout: an unreachable server must end in an error message, not an endless loader.
+const apiClient = axios.create({ baseURL: API_URL, timeout: 15000 });
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
