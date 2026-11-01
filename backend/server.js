@@ -20,6 +20,8 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 // CORS: in production allow only the configured frontend origin
 const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors(allowedOrigins.length ? { origin: allowedOrigins } : {}));
+// Menu photos (also used by the mobile app, which has no access to the website's /public)
+app.use('/img', express.static(path.join(__dirname, '..', 'public', 'img'), { maxAge: '7d', fallthrough: false }));
 app.use(localizeErrors);
 app.use(express.json({ limit: '100kb' }));
 
