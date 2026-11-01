@@ -92,7 +92,7 @@ class EmptyState extends StatelessWidget {
     child: Column(
       children: [
         EmberLottie(anim, size: 170),
-        const SizedBox(height: 8),
+        const SizedBox(height: 20),
         Text(
           title,
           textAlign: TextAlign.center,

@@ -68,6 +68,7 @@ class BasketView extends StatelessWidget {
               child: Column(
                 children: [
                   const EmberLottie(EmberAnim.emptyBasket, size: 150),
+                  const SizedBox(height: 20),
                   Text(
                     t('cart_empty'),
                     style: Ember.text(
