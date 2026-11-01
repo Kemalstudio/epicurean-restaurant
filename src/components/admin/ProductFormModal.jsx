@@ -95,7 +95,7 @@ export default function ProductFormModal({ product, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <Label className="text-xs mb-1">Price ($)</Label>
+              <Label className="text-xs mb-1">Price (TMT)</Label>
               <Input type="number" step="0.01" value={form.base_price} onChange={(e) => update('base_price', parseFloat(e.target.value) || 0)} className="rounded-xl" />
             </div>
             <div>

@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Check, X, Plus, Minus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function MealCustomizer({ product, onIngredientsChange }) {
   const [selections, setSelections] = useState({});
+  const { t, formatPrice } = useLanguage();
 
   const allIngredientIds = [
     ...(product.default_ingredients || []),
@@ -38,6 +40,8 @@ export default function MealCustomizer({ product, onIngredientsChange }) {
   useEffect(() => {
     const added = [];
     const removed = [];
+    const addedIds = [];
+    const removedIds = [];
     let extraPrice = 0;
     let extraCals = 0;
 
@@ -47,16 +51,18 @@ export default function MealCustomizer({ product, onIngredientsChange }) {
 
       if (status === 'added' && optionalSet.has(id)) {
         added.push(ing.name);
+        addedIds.push(ing.id);
         extraPrice += ing.price || 0;
         extraCals += ing.calories || 0;
       }
       if (status === 'removed' && defaultSet.has(id)) {
         removed.push(ing.name);
+        removedIds.push(ing.id);
         extraCals -= ing.calories || 0;
       }
     });
 
-    onIngredientsChange(added, removed, extraPrice, extraCals);
+    onIngredientsChange(added, removed, extraPrice, extraCals, addedIds, removedIds);
   }, [selections]);
 
   if (allIngredientIds.length === 0) return null;
@@ -83,7 +89,7 @@ export default function MealCustomizer({ product, onIngredientsChange }) {
 
   return (
     <div>
-      <label className="text-sm font-semibold text-foreground mb-2 block">Customize Ingredients</label>
+      <label className="text-sm font-semibold text-foreground mb-2 block">{t('customize_ingredients')}</label>
       <div className="space-y-1.5 max-h-40 overflow-y-auto">
         {relevantIngredients.map(ing => {
           const status = selections[ing.id] || 'available';
@@ -92,6 +98,8 @@ export default function MealCustomizer({ product, onIngredientsChange }) {
           return (
             <button
               key={ing.id}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => toggleIngredient(ing.id)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-300 text-left ${
                 isActive
@@ -110,10 +118,10 @@ export default function MealCustomizer({ product, onIngredientsChange }) {
                 {ing.name}
               </span>
               {ing.price > 0 && optionalSet.has(ing.id) && (
-                <span className="text-xs text-primary font-semibold">+${ing.price.toFixed(2)}</span>
+                <span className="text-xs text-primary font-semibold">+{formatPrice(ing.price)}</span>
               )}
               {ing.calories > 0 && (
-                <span className="text-xs text-muted-foreground">{ing.calories} cal</span>
+                <span className="text-xs text-muted-foreground">{ing.calories} {t('kcal')}</span>
               )}
             </button>
           );

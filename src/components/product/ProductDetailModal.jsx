@@ -19,11 +19,13 @@ import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag';
 
 export default function ProductDetailModal({ product, onClose }) {
   const { addItem } = useCart();
-  const { t } = useLanguage();
+  const { t, formatPrice } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.name || null);
   const [addedIngredients, setAddedIngredients] = useState([]);
   const [removedIngredients, setRemovedIngredients] = useState([]);
+  const [addedIngredientIds, setAddedIngredientIds] = useState([]);
+  const [removedIngredientIds, setRemovedIngredientIds] = useState([]);
   const [extraPrice, setExtraPrice] = useState(0);
   const [extraCalories, setExtraCalories] = useState(0);
 
@@ -38,7 +40,7 @@ export default function ProductDetailModal({ product, onClose }) {
       : currentPrice;
 
   const handleAddToCart = () => {
-    addItem(product, quantity, selectedSize, addedIngredients, removedIngredients, extraPrice);
+    addItem(product, quantity, selectedSize, addedIngredients, removedIngredients, extraPrice, addedIngredientIds, removedIngredientIds);
     onClose();
   };
 
@@ -66,6 +68,7 @@ export default function ProductDetailModal({ product, onClose }) {
         >
           <button
               onClick={onClose}
+              aria-label={t('close')}
               className="absolute top-6 right-6 z-10 w-11 h-11 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors"
           >
             <X className="w-6 h-6" />
@@ -81,7 +84,7 @@ export default function ProductDetailModal({ product, onClose }) {
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute top-6 left-6 flex flex-col gap-2">
-                  {product.is_new && <Badge className="bg-secondary text-white border-0 px-3 py-1 font-bold">NEW</Badge>}
+                  {product.is_new && <Badge className="bg-secondary text-white border-0 px-3 py-1 font-bold">{t('badge_new')}</Badge>}
                   {product.discount_percent > 0 && <Badge className="bg-destructive text-white border-0 px-3 py-1 font-bold">-{product.discount_percent}%</Badge>}
                 </div>
               </div>
@@ -92,7 +95,9 @@ export default function ProductDetailModal({ product, onClose }) {
                   <div className="flex items-center gap-2 mb-3">
                     <Star className="w-5 h-5 fill-secondary text-secondary" />
                     <span className="font-bold text-lg">{product.rating?.toFixed(1)}</span>
-                    <span className="text-muted-foreground text-sm">({product.review_count} {t('testimonials')})</span>
+                    {product.review_count > 0 && (
+                        <span className="text-muted-foreground text-sm">({t('reviews_count', { count: product.review_count })})</span>
+                    )}
                   </div>
                   <h2 className="font-display text-4xl font-bold text-foreground mb-4">{product.name}</h2>
                   <p className="text-muted-foreground text-base leading-relaxed">{product.description}</p>
@@ -124,11 +129,13 @@ export default function ProductDetailModal({ product, onClose }) {
                 {/* Выбор размера */}
                 {product.sizes && product.sizes.length > 0 && (
                     <div>
-                      <label className="text-sm font-bold text-foreground mb-4 block uppercase tracking-widest">{t('select_size') || 'Select Size'}</label>
+                      <label className="text-sm font-bold text-foreground mb-4 block uppercase tracking-widest">{t('select_size')}</label>
                       <div className="flex gap-3">
                         {product.sizes.map(size => (
                             <button
                                 key={size.name}
+                                type="button"
+                                aria-pressed={selectedSize === size.name}
                                 onClick={() => setSelectedSize(size.name)}
                                 className={`flex-1 py-4 px-4 rounded-2xl border-2 transition-all duration-300 ${
                                     selectedSize === size.name
@@ -147,7 +154,9 @@ export default function ProductDetailModal({ product, onClose }) {
                 {/* Кастомизатор ингредиентов */}
                 <MealCustomizer
                     product={product}
-                    onIngredientsChange={(added, removed, price, cals) => {
+                    onIngredientsChange={(added, removed, price, cals, addedIds, removedIds) => {
+                      setAddedIngredientIds(addedIds);
+                      setRemovedIngredientIds(removedIds);
                       setAddedIngredients(added);
                       setRemovedIngredients(removed);
                       setExtraPrice(price);
@@ -164,19 +173,19 @@ export default function ProductDetailModal({ product, onClose }) {
               <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mb-1">{t('total')}</p>
               <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-primary">
-                {discountedPrice.toFixed(2)} <span className="text-sm">{t('currency')}</span>
+                {formatPrice(discountedPrice * quantity)}
               </span>
               </div>
-              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{currentCalories} calories</span>
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{currentCalories} {t('kcal')}</span>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-muted rounded-2xl p-1.5">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-background transition-colors shadow-sm">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label={t('decrease_quantity')} className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-background transition-colors shadow-sm">
                   <Minus className="w-5 h-5" />
                 </button>
                 <span className="w-10 text-center font-black text-lg">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-background transition-colors shadow-sm">
+                <button onClick={() => setQuantity(Math.min(99, quantity + 1))} aria-label={t('increase_quantity')} className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-background transition-colors shadow-sm">
                   <Plus className="w-5 h-5" />
                 </button>
               </div>

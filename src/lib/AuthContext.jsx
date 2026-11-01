@@ -103,6 +103,7 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
       
       const status = error.response?.status || error.status;
+      if (status === 401) localStorage.removeItem('base44_access_token');
       if (status === 401 || status === 403) {
         setAuthError({
           type: 'auth_required',

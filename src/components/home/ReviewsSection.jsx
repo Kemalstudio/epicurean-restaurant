@@ -65,7 +65,7 @@ export default function ReviewsSection() {
 
                 <div className="relative">
                     {isLoading ? (
-                        <div className="h-64 flex items-center justify-center text-muted-foreground">Loading...</div>
+                        <div className="h-64 flex items-center justify-center text-muted-foreground">{t('loading')}</div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <AnimatePresence mode="wait">
@@ -86,11 +86,11 @@ export default function ReviewsSection() {
                                         <p className="text-foreground/80 leading-relaxed mb-8 italic">"{rev.comment}"</p>
                                         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-border/50">
                                             <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
-                                                {rev.author_name[0]}
+                                                {rev.author_name?.[0]}
                                             </div>
                                             <div>
                                                 <p className="font-bold text-sm text-foreground">{rev.author_name}</p>
-                                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Verified Guest</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t('verified_guest')}</p>
                                             </div>
                                         </div>
                                     </motion.div>

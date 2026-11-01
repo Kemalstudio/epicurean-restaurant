@@ -55,7 +55,7 @@ export default function AiAssistant() {
             setMessages(prev => [...prev, { role: 'assistant', content: response }]);
         } catch (error) {
             console.error("AI Error:", error);
-            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: t('ai_error') }]);
         } finally {
             setLoading(false);
         }
@@ -66,6 +66,7 @@ export default function AiAssistant() {
             {/* Кнопка вызова чата */}
             <motion.button
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label={isOpen ? t('close') : t('open_assistant')}
                 className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
                 whileHover={{ rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
@@ -89,8 +90,8 @@ export default function AiAssistant() {
                                     <Sparkles className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-foreground">AI Assistant</h3>
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Online</p>
+                                    <h3 className="text-sm font-bold text-foreground">{t('ai_title')}</h3>
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">{t('ai_online')}</p>
                                 </div>
                             </div>
                         </div>
@@ -145,12 +146,15 @@ export default function AiAssistant() {
                                 <input
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Type a message..."
+                                    placeholder={t('type_message')}
+                                    aria-label={t('type_message')}
+                                    maxLength={500}
                                     className="flex-1 bg-muted/50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 text-foreground"
                                 />
                                 <button
                                     type="submit"
                                     disabled={loading || !input.trim()}
+                                    aria-label={t('send')}
                                     className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
                                 >
                                     <Send className="w-4 h-4" />

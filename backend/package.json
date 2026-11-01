@@ -1,10 +1,11 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Epicurean restaurant API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server.js"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +16,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "nodemailer": "^8.0.7"
+  },
+  "engines": {
+    "node": ">=22.5"
   }
 }

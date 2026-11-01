@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { DollarSign, ShoppingBag, Users, TrendingUp, Package, Star } from 'lucide-react';
+import { formatPrice } from '@/lib/format';
+import { Banknote, ShoppingBag, Users, TrendingUp, Package, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -12,7 +13,7 @@ const COLORS = ['hsl(18,100%,60%)', 'hsl(45,100%,51%)', 'hsl(170,55%,39%)', 'hsl
 export default function AdminDashboard() {
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date'),
+    queryFn: () => base44.entities.Order.list('-created_at'),
   });
 
   const { data: products = [] } = useQuery({
@@ -20,15 +21,23 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Product.list(),
   });
 
-  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
 
-  const salesByDay = {};
+  // Revenue for the last 7 days, oldest first; cancelled orders are not counted
+  const dayKey = (date) => date.toISOString().slice(0, 10);
+  const salesByDay = new Map();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    salesByDay.set(dayKey(d), { name: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }), value: 0 });
+  }
   orders.forEach(o => {
-    const day = new Date(o.created_date).toLocaleDateString('en-US', { weekday: 'short' });
-    salesByDay[day] = (salesByDay[day] || 0) + (o.total || 0);
+    if (o.status === 'cancelled' || !o.created_at) return;
+    const entry = salesByDay.get(dayKey(new Date(o.created_at)));
+    if (entry) entry.value += o.total || 0;
   });
-  const salesData = Object.entries(salesByDay).map(([name, value]) => ({ name, value: Math.round(value) }));
+  const salesData = [...salesByDay.values()].map(d => ({ ...d, value: Math.round(d.value) }));
 
   const catCount = {};
   orders.forEach(o => {
@@ -42,7 +51,7 @@ export default function AdminDashboard() {
     .map(([name, value]) => ({ name: name.substring(0, 15), value }));
 
   const stats = [
-    { icon: DollarSign, label: 'Total Revenue', value: `$${totalRevenue.toFixed(0)}`, color: 'text-primary bg-primary/10' },
+    { icon: Banknote, label: 'Total Revenue', value: formatPrice(totalRevenue), color: 'text-primary bg-primary/10' },
     { icon: ShoppingBag, label: 'Total Orders', value: orders.length, color: 'text-secondary bg-secondary/10' },
     { icon: Package, label: 'Active Orders', value: activeOrders, color: 'text-accent bg-accent/10' },
     { icon: TrendingUp, label: 'Products', value: products.length, color: 'text-primary bg-primary/10' },
@@ -132,7 +141,7 @@ export default function AdminDashboard() {
                   <td className="py-3 font-medium">{o.order_number}</td>
                   <td className="py-3 text-muted-foreground">{o.customer_name || 'Guest'}</td>
                   <td className="py-3 text-muted-foreground">{o.items?.length || 0}</td>
-                  <td className="py-3 font-semibold text-primary">${o.total?.toFixed(2)}</td>
+                  <td className="py-3 font-semibold text-primary">{formatPrice(o.total)}</td>
                   <td className="py-3">
                     <Badge variant="secondary" className="text-xs capitalize">{o.status?.replace(/_/g, ' ')}</Badge>
                   </td>

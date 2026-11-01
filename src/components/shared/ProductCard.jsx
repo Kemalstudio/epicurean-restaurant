@@ -14,6 +14,8 @@ import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag';
 
 export default function ProductCard({ product, onOpenDetail, onToggleWishlist, isWishlisted }) {
   const { addItem } = useCart();
+  // Quick add uses the default (first) size — same as the detail modal
+  const quickAdd = (e) => { e.stopPropagation(); addItem(product, 1, product.sizes?.[0]?.name || null); };
   const { t } = useLanguage();
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -42,25 +44,27 @@ export default function ProductCard({ product, onOpenDetail, onToggleWishlist, i
               src={product.image_url}
               alt={product.name}
               onLoad={() => setImageLoaded(true)}
-              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3000ms] ease-out ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform [transition-duration:3000ms] ease-out ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
 
           {/* Бейджи */}
           <div className="absolute top-4 left-4 flex flex-col gap-1.5">
             {product.is_new && (
-                <Badge className="bg-secondary text-secondary-foreground border-0 text-[10px] font-bold px-2 py-0.5">NEW</Badge>
+                <Badge className="bg-secondary text-secondary-foreground border-0 text-[10px] font-bold px-2 py-0.5">{t('badge_new')}</Badge>
             )}
             {product.discount_percent > 0 && (
                 <Badge className="bg-destructive text-white border-0 text-[10px] font-bold px-2 py-0.5">-{product.discount_percent}%</Badge>
             )}
             {product.is_popular && (
-                <Badge className="bg-primary text-white border-0 text-[10px] font-bold px-2 py-0.5">HOT</Badge>
+                <Badge className="bg-primary text-white border-0 text-[10px] font-bold px-2 py-0.5">{t('badge_hot')}</Badge>
             )}
           </div>
 
           {/* Избранное */}
           <button
               onClick={(e) => { e.stopPropagation(); onToggleWishlist?.(product.id); }}
+              aria-label={isWishlisted ? t('remove_from_wishlist') : t('add_to_wishlist')}
+              aria-pressed={!!isWishlisted}
               className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-all duration-300 shadow-sm"
           >
             <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-foreground/60'}`} />
@@ -74,7 +78,8 @@ export default function ProductCard({ product, onOpenDetail, onToggleWishlist, i
           >
             <Button
                 size="icon"
-                onClick={(e) => { e.stopPropagation(); addItem(product); }}
+                onClick={quickAdd}
+                aria-label={t('add_to_cart')}
                 className="w-11 h-11 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/30"
             >
               <Plus className="w-6 h-6" />
@@ -126,7 +131,8 @@ export default function ProductCard({ product, onOpenDetail, onToggleWishlist, i
             <Button
                 size="sm"
                 variant="ghost"
-                onClick={(e) => { e.stopPropagation(); addItem(product); }}
+                onClick={quickAdd}
+                aria-label={t('add_to_cart')}
                 className="text-primary hover:bg-primary/10 rounded-xl text-xs font-bold gap-2"
             >
               <ShoppingBag className="w-4 h-4" />

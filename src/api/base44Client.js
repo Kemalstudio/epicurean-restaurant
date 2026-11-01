@@ -19,6 +19,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+const CLIENT_ERRORS = {
+  en: { generic: 'Something went wrong. Please try again.', offline: 'Server is not reachable. Check your connection.' },
+  ru: { generic: 'Что-то пошло не так. Попробуйте ещё раз.', offline: 'Сервер недоступен. Проверьте подключение к интернету.' },
+  tk: { generic: 'Näsazlyk ýüze çykdy. Gaýtadan synanyşyň.', offline: 'Serwer elýeterli däl. Internet birikmesini barlaň.' },
+};
+
+/** Human-readable message from an API error. The server already translates { message } by ?lang=. */
+export const apiErrorMessage = (error) => {
+  const texts = CLIENT_ERRORS[localStorage.getItem('app_lang')] || CLIENT_ERRORS.en;
+  if (error?.response?.data?.message) return error.response.data.message;
+  return error?.request && !error?.response ? texts.offline : texts.generic;
+};
+
 class EntityProxy {
   constructor(entityName) {
     this.entityName = entityName;
@@ -68,6 +81,18 @@ export const base44 = {
     Review: new EntityProxy('Review'),
   },
 
+  orders: {
+    // Order is priced on the server: send only what was chosen, never prices
+    place: async (data) => {
+      const res = await apiClient.post('/Order', data);
+      return res.data;
+    },
+    checkPromo: async (code, subtotal) => {
+      const res = await apiClient.post('/orders/promo', { code, subtotal });
+      return res.data;
+    },
+  },
+
   auth: {
     me: async () => {
       const res = await apiClient.get('/auth/me');
@@ -100,8 +125,13 @@ export const base44 = {
       return res.data;
     },
 
-    // Выход из аккаунта
-    logout: () => {
+    // Выход из аккаунта: сессия удаляется и на сервере
+    logout: async () => {
+      try {
+        await apiClient.post('/auth/logout');
+      } catch {
+        // offline — the token is removed locally anyway
+      }
       localStorage.removeItem('base44_access_token');
       window.location.href = '/login';
     },

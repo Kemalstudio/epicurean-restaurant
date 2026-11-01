@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatPrice } from '@/lib/format';
 import { Eye, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ export default function AdminOrders() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date'),
+    queryFn: () => base44.entities.Order.list('-created_at'),
   });
 
   const filtered = filterStatus === 'all' ? orders : orders.filter(o => o.status === filterStatus);
@@ -80,7 +81,7 @@ export default function AdminOrders() {
                     </div>
                   </td>
                   <td className="p-4 text-muted-foreground">{o.items?.length || 0}</td>
-                  <td className="p-4 font-semibold text-primary">${o.total?.toFixed(2)}</td>
+                  <td className="p-4 font-semibold text-primary">{formatPrice(o.total)}</td>
                   <td className="p-4">
                     <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v)}>
                       <SelectTrigger className="w-36 h-8 rounded-lg text-xs">
@@ -139,19 +140,19 @@ export default function AdminOrders() {
                         <p className="text-xs text-destructive">- {item.removed_ingredients.join(', ')}</p>
                       )}
                     </div>
-                    <span className="font-medium">${item.total_price?.toFixed(2)}</span>
+                    <span className="font-medium">{formatPrice(item.total_price)}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t pt-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${selectedOrder.subtotal?.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(selectedOrder.subtotal)}</span></div>
                 {selectedOrder.discount_amount > 0 && (
-                  <div className="flex justify-between text-accent"><span>Discount</span><span>-${selectedOrder.discount_amount?.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-accent"><span>Discount</span><span>−{formatPrice(selectedOrder.discount_amount)}</span></div>
                 )}
-                <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>${selectedOrder.delivery_fee?.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${selectedOrder.tax?.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{formatPrice(selectedOrder.delivery_fee)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>{formatPrice(selectedOrder.tax)}</span></div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>Total</span><span className="text-primary">${selectedOrder.total?.toFixed(2)}</span>
+                  <span>Total</span><span className="text-primary">{formatPrice(selectedOrder.total)}</span>
                 </div>
               </div>
             </div>

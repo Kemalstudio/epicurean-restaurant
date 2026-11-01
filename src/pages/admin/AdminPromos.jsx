@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatPrice } from '@/lib/format';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ export default function AdminPromos() {
 
   const { data: promos = [] } = useQuery({
     queryKey: ['admin-promos'],
-    queryFn: () => base44.entities.PromoCode.list('-created_date'),
+    queryFn: () => base44.entities.PromoCode.list('-created_at'),
   });
 
   const openForm = (promo = null) => {
@@ -79,7 +80,7 @@ export default function AdminPromos() {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div><span className="text-muted-foreground">Discount:</span> <strong>{p.discount_percent}%</strong></div>
               <div><span className="text-muted-foreground">Uses:</span> <strong>{p.used_count || 0}/{p.max_uses}</strong></div>
-              {p.min_order_amount > 0 && <div><span className="text-muted-foreground">Min:</span> <strong>${p.min_order_amount}</strong></div>}
+              {p.min_order_amount > 0 && <div><span className="text-muted-foreground">Min:</span> <strong>{formatPrice(p.min_order_amount)}</strong></div>}
               {p.expires_at && <div><span className="text-muted-foreground">Expires:</span> <strong>{new Date(p.expires_at).toLocaleDateString()}</strong></div>}
             </div>
           </div>
@@ -108,7 +109,7 @@ export default function AdminPromos() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs">Min Order ($)</Label>
+                <Label className="text-xs">Min order (TMT)</Label>
                 <Input type="number" value={form.min_order_amount} onChange={(e) => setForm({ ...form, min_order_amount: parseFloat(e.target.value) || 0 })} className="rounded-xl" />
               </div>
               <div>

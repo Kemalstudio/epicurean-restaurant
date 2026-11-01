@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatPrice } from '@/lib/format';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ export default function AdminProducts() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['admin-products'],
-    queryFn: () => base44.entities.Product.list('-created_date'),
+    queryFn: () => base44.entities.Product.list('-created_at'),
   });
 
   const filtered = products.filter(p =>
@@ -69,7 +70,7 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 font-semibold text-primary">${p.base_price?.toFixed(2)}</td>
+                  <td className="p-4 font-semibold text-primary">{formatPrice(p.base_price)}</td>
                   <td className="p-4">
                     <div className="flex gap-1">
                       {p.is_available && <Badge className="bg-accent/10 text-accent border-0 text-xs">Active</Badge>}

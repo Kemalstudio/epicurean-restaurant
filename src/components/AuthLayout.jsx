@@ -1,9 +1,16 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
+  const { t } = useLanguage();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Epicurean
+        </Link>
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
             <Icon className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
@@ -18,6 +25,6 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
           <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
         )}
       </div>
-    </div>
+    </main>
   );
 }

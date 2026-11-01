@@ -18,7 +18,7 @@ export default function SpecialOffers() {
   if (offers.length === 0) return null;
 
   return (
-      <section className="py-20 bg-muted/50">
+      <section id="offers" className="py-20 bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
               initial={{ opacity: 0, y: 30 }}

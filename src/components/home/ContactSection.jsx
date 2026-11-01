@@ -46,10 +46,10 @@ export default function ContactSection() {
                 className="space-y-6"
             >
               {[
-                { icon: MapPin, label: t('visit_us'), value: 'Ashgabat / Turkmenistan' },
+                { icon: MapPin, label: t('visit_us'), value: t('address_value') },
                 { icon: Phone, label: t('call_us'), value: '+993 (64) 00-53-74' },
                 { icon: Mail, label: t('email_us'), value: 'hello@epicurean.com' },
-                { icon: Clock, label: t('hours'), value: 'Mon-Sun: 10:00 AM - 11:00 PM' },
+                { icon: Clock, label: t('hours'), value: t('hours_value') },
               ].map((item, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">

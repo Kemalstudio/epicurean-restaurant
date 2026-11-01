@@ -1,16 +1,25 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useSearchParams } from "react-router-dom";
+import { base44, apiErrorMessage } from "@/api/base44Client";
+import { safeRedirectPath } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Lock, Loader2, User } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/LanguageContext";
+
+const inputClass = "pl-11 h-14 rounded-2xl bg-muted/30 border-none";
+const iconClass = "absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground";
 
 export default function Register() {
+  const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const redirectTo = safeRedirectPath(searchParams.get("redirect"));
+
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,26 +31,29 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (password.length < 8) {
+      setError(t("password_too_short"));
+      return;
+    }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwords_mismatch"));
       return;
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
+      await base44.auth.register({ email, password, full_name: name });
       setShowOtp(true);
-      toast({
-        title: "Code sent!",
-        description: "Please check your email inbox.",
-      });
+      toast({ title: t("code_sent"), description: t("check_inbox") });
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = async (e) => {
+    e?.preventDefault();
+    if (otpCode.length < 6) return;
     setError("");
     setLoading(true);
     try {
@@ -49,13 +61,11 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
-      toast({
-        title: "Success!",
-        description: "Your email has been verified.",
-      });
-      window.location.href = "/";
+      toast({ title: t("success"), description: t("email_verified") });
+      window.location.href = redirectTo;
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid verification code");
+      setError(apiErrorMessage(err));
+      setOtpCode("");
     } finally {
       setLoading(false);
     }
@@ -64,174 +74,162 @@ export default function Register() {
   const handleResend = async () => {
     setError("");
     try {
-      await base44.auth.register({ email, password });
-      toast({
-        title: "New code sent",
-        description: "Check your email for the new code.",
-      });
+      await base44.auth.resendOtp(email);
+      toast({ title: t("new_code_sent"), description: t("check_inbox") });
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to resend code",
-        variant: "destructive"
-      });
+      toast({ title: t("resend_failed"), description: apiErrorMessage(err), variant: "destructive" });
     }
-  };
-
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/");
   };
 
   if (showOtp) {
     return (
-        <AuthLayout
-            icon={Mail}
-            title="Verify your email"
-            subtitle={`We sent a code to ${email}`}
-        >
-          {error && (
-              <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center font-medium">
-                {error}
-              </div>
-          )}
+      <AuthLayout icon={Mail} title={t("verify_email")} subtitle={t("code_sent_to", { email })}>
+        {error && (
+          <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center font-medium">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleVerify}>
           <div className="flex justify-center mb-8">
             <InputOTP
-                maxLength={6}
-                value={otpCode}
-                onChange={setOtpCode}
-                autoFocus
-                autoComplete="one-time-code"
+              maxLength={6}
+              value={otpCode}
+              onChange={setOtpCode}
+              autoFocus
+              autoComplete="one-time-code"
             >
               <InputOTPGroup className="gap-2">
-                <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
-                <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
-                <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
-                <InputOTPSlot index={3} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
-                <InputOTPSlot index={4} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
-                <InputOTPSlot index={5} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
+                {[0, 1, 2, 3, 4, 5].map(i => (
+                  <InputOTPSlot key={i} index={i} className="w-12 h-14 text-xl font-bold border-2 rounded-xl" />
+                ))}
               </InputOTPGroup>
             </InputOTP>
           </div>
           <Button
-              className="w-full h-14 font-bold rounded-2xl bg-primary text-white text-lg shadow-xl shadow-primary/20"
-              onClick={handleVerify}
-              disabled={loading || otpCode.length < 6}
+            type="submit"
+            className="w-full h-14 font-bold rounded-2xl bg-primary text-white text-lg shadow-xl shadow-primary/20"
+            disabled={loading || otpCode.length < 6}
           >
             {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Verifying...
-                </>
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+                {t("verifying")}
+              </>
             ) : (
-                "Verify Account"
+              t("verify_account")
             )}
           </Button>
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Didn't receive the code?{" "}
-            <button onClick={handleResend} className="text-primary font-bold hover:underline">
-              Resend
-            </button>
-          </p>
-        </AuthLayout>
+        </form>
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          {t("no_code")}{" "}
+          <button type="button" onClick={handleResend} className="text-primary font-bold hover:underline">
+            {t("resend")}
+          </button>
+        </p>
+      </AuthLayout>
     );
   }
 
   return (
-      <AuthLayout
-          icon={UserPlus}
-          title="Create your account"
-          subtitle="Sign up to get started"
-          footer={
-            <>
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary font-bold hover:underline">
-                Log in
-              </Link>
-            </>
-          }
-      >
-        <Button
-            variant="outline"
-            className="w-full h-12 text-sm font-bold mb-6 rounded-xl border-2 hover:bg-muted"
-            onClick={handleGoogle}
-        >
-          <GoogleIcon className="w-5 h-5 mr-2" />
-          Continue with Google
-        </Button>
-
-        <div className="relative mb-8 text-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" />
-          </div>
-          <span className="relative bg-card px-4 text-xs text-muted-foreground uppercase font-bold tracking-widest">
-          or email
-        </span>
+    <AuthLayout
+      icon={UserPlus}
+      title={t("create_account_title")}
+      subtitle={t("register_subtitle")}
+      footer={
+        <>
+          {t("have_account")}{" "}
+          <Link to={`/login${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`} className="text-primary font-bold hover:underline">
+            {t("log_in")}
+          </Link>
+        </>
+      }
+    >
+      {error && (
+        <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center font-medium">
+          {error}
         </div>
+      )}
 
-        {error && (
-            <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center font-medium">
-              {error}
-            </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-              <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-11 h-14 rounded-2xl bg-muted/30 border-none"
-                  required
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="name">{t("full_name")}</Label>
+          <div className="relative">
+            <User className={iconClass} aria-hidden="true" />
+            <Input
+              id="name"
+              autoComplete="name"
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputClass}
+              maxLength={100}
+              required
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-              <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-11 h-14 rounded-2xl bg-muted/30 border-none"
-                  required
-              />
-            </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("email")}</Label>
+          <div className="relative">
+            <Mail className={iconClass} aria-hidden="true" />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputClass}
+              required
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm">Confirm Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-              <Input
-                  id="confirm"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-11 h-14 rounded-2xl bg-muted/30 border-none"
-                  required
-              />
-            </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">{t("password")}</Label>
+          <div className="relative">
+            <Lock className={iconClass} aria-hidden="true" />
+            <Input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputClass}
+              minLength={8}
+              maxLength={128}
+              aria-describedby="password-hint"
+              required
+            />
           </div>
-          <Button type="submit" className="w-full h-14 font-bold rounded-2xl bg-primary text-white text-lg shadow-xl shadow-primary/20 mt-4" disabled={loading}>
-            {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating account...
-                </>
-            ) : (
-                "Create account"
-            )}
-          </Button>
-        </form>
-      </AuthLayout>
+          <p id="password-hint" className="text-xs text-muted-foreground">{t("password_hint")}</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirm">{t("confirm_password")}</Label>
+          <div className="relative">
+            <Lock className={iconClass} aria-hidden="true" />
+            <Input
+              id="confirm"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
+        </div>
+        <Button type="submit" className="w-full h-14 font-bold rounded-2xl bg-primary text-white text-lg shadow-xl shadow-primary/20 mt-4" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+              {t("creating_account")}
+            </>
+          ) : (
+            t("create_account")
+          )}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

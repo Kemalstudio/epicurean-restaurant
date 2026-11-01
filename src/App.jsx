@@ -7,10 +7,10 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 // Импорт вспомогательных компонентов и контекст
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { CartProvider } from '@/lib/cartStore.jsx';
 import { ThemeProvider } from '@/lib/themeStore.jsx';
-import { LanguageProvider } from '@/lib/LanguageContext'; // Провайдер многоязычности
+import { LanguageProvider, useLanguage } from '@/lib/LanguageContext'; // Провайдер многоязычности
 
 // Импорт макетов (Layouts)
 import MainLayout from '@/components/layout/MainLayout';
@@ -42,13 +42,8 @@ import AdminPromos from '@/pages/admin/AdminPromos';
  * и проверяет состояние загрузки данных пользователя.
  */
 const AuthenticatedApp = () => {
-    const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-
-    // Логирование состояния для отладки в консоли браузера
-    console.log("[App] Текущее состояние загрузки:", {
-        isLoadingPublicSettings,
-        isLoadingAuth
-    });
+    const { isLoadingAuth, isLoadingPublicSettings } = useAuth();
+    const { t } = useLanguage();
 
     // Если приложение еще загружает настройки или проверяет токен - показываем спиннер
     if (isLoadingPublicSettings || isLoadingAuth) {
@@ -57,19 +52,11 @@ const AuthenticatedApp = () => {
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
                     <p className="text-sm text-muted-foreground font-medium animate-pulse">
-                        Загрузка системы Epicurean...
+                        {t('app_loading')}
                     </p>
                 </div>
             </div>
         );
-    }
-
-    if (authError) {
-        console.warn("[App] Ошибка доступа:", authError.type);
-
-        if (authError.type === 'user_not_registered') {
-            return <UserNotRegisteredError />;
-        }
     }
 
     return (
@@ -93,16 +80,20 @@ const AuthenticatedApp = () => {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
 
-                {/* Личный кабинет пользователя */}
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/wishlist" element={<Wishlist />} />
+                {/* Личный кабинет пользователя — только после входа */}
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                </Route>
 
-                {/* ПАНЕЛЬ АДМИНИСТРАТОРА (Доступна через Навбар) */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/products" element={<AdminProducts />} />
-                <Route path="/admin/categories" element={<AdminCategories />} />
-                <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/promos" element={<AdminPromos />} />
+                {/* ПАНЕЛЬ АДМИНИСТРАТОРА — только для роли admin */}
+                <Route element={<ProtectedRoute adminOnly />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/products" element={<AdminProducts />} />
+                    <Route path="/admin/categories" element={<AdminCategories />} />
+                    <Route path="/admin/orders" element={<AdminOrders />} />
+                    <Route path="/admin/promos" element={<AdminPromos />} />
+                </Route>
             </Route>
 
             {/* 3. ОБРАБОТКА НЕСУЩЕСТВУЮЩИХ СТРАНИЦ */}

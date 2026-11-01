@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useWishlist } from '@/hooks/use-wishlist';
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,21 +19,7 @@ export default function PopularDishes() {
     queryFn: () => base44.entities.Product.filter({ is_popular: true }, '-rating', 8),
   });
 
-  const { data: wishlistItems = [] } = useQuery({
-    queryKey: ['wishlist'],
-    queryFn: () => base44.entities.Wishlist.list(),
-  });
-
-  const wishlistedIds = new Set(wishlistItems.map(w => w.product_id));
-
-  const toggleWishlist = async (productId) => {
-    const existing = wishlistItems.find(w => w.product_id === productId);
-    if (existing) {
-      await base44.entities.Wishlist.delete(existing.id);
-    } else {
-      await base44.entities.Wishlist.create({ product_id: productId });
-    }
-  };
+  const { wishlistedIds, toggleWishlist } = useWishlist();
 
   return (
       <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">

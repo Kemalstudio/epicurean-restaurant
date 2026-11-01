@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/lib/cartStore.jsx';
 import { useLanguage } from '@/lib/LanguageContext';
-import { base44 } from '@/api/base44Client';
+import { base44, apiErrorMessage } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 
@@ -20,9 +20,9 @@ export default function CartDrawer() {
   const {
     items, isOpen, setIsOpen, removeItem, updateQuantity, clearCart,
     promoCode, setPromoCode, promoDiscount, setPromoDiscount,
-    subtotal, discountAmount, deliveryFee, tax, total, itemCount
+    subtotal, discountAmount, deliveryFee, tax, total, itemCount, pricing
   } = useCart();
-  const { t } = useLanguage();
+  const { t, formatPrice } = useLanguage();
   const [promoInput, setPromoInput] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
 
@@ -30,25 +30,15 @@ export default function CartDrawer() {
     if (!promoInput.trim()) return;
     setApplyingPromo(true);
     try {
-      const codes = await base44.entities.PromoCode.filter({ code: promoInput.trim().toUpperCase(), is_active: true });
-      if (codes.length > 0) {
-        const code = codes[0];
-        if (code.max_uses && code.used_count >= code.max_uses) {
-          toast({ title: 'Code expired', variant: 'destructive' });
-        } else if (code.min_order_amount && subtotal < code.min_order_amount) {
-          toast({ title: 'Minimum not met', description: `Need ${code.min_order_amount} ${t('currency')}`, variant: 'destructive' });
-        } else {
-          setPromoCode(code.code);
-          setPromoDiscount(code.discount_percent);
-          toast({ title: 'Code applied!', description: `${code.discount_percent}% discount.` });
-        }
-      } else {
-        toast({ title: 'Invalid code', variant: 'destructive' });
-      }
-    } catch (e) {
-      console.error(e);
+      const code = await base44.orders.checkPromo(promoInput.trim(), subtotal);
+      setPromoCode(code.code);
+      setPromoDiscount(code.discount_percent);
+      toast({ title: t('promo_applied'), description: t('promo_applied_desc', { percent: code.discount_percent }) });
+    } catch (error) {
+      toast({ title: t('promo_failed'), description: apiErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setApplyingPromo(false);
     }
-    setApplyingPromo(false);
   };
 
   return (
@@ -80,7 +70,7 @@ export default function CartDrawer() {
                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{itemCount} {t('items')}</span>
                     </div>
                   </div>
-                  <button onClick={() => setIsOpen(false)} className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
+                  <button onClick={() => setIsOpen(false)} aria-label={t('close')} className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
@@ -92,9 +82,9 @@ export default function CartDrawer() {
                         <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
                           <ShoppingBag className="w-10 h-10 text-muted-foreground/40" />
                         </div>
-                        <p className="text-xl font-bold mb-2">Empty Cart</p>
-                        <p className="text-sm text-muted-foreground mb-8">Add something delicious!</p>
-                        <Button onClick={() => setIsOpen(false)} className="bg-primary rounded-2xl px-8 h-12 font-bold uppercase text-xs tracking-widest">Start Shopping</Button>
+                        <p className="text-xl font-bold mb-2">{t('cart_empty')}</p>
+                        <p className="text-sm text-muted-foreground mb-8">{t('cart_empty_desc')}</p>
+                        <Button onClick={() => setIsOpen(false)} className="bg-primary rounded-2xl px-8 h-12 font-bold uppercase text-xs tracking-widest">{t('start_shopping')}</Button>
                       </div>
                   ) : (
                       items.map(item => (
@@ -111,15 +101,15 @@ export default function CartDrawer() {
                             <div className="flex-1 min-w-0 pr-6">
                               <h4 className="font-bold text-sm text-foreground truncate mb-1">{item.product_name}</h4>
                               {item.size && <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">{item.size}</span>}
-                              <p className="text-primary font-black text-sm mt-2">{item.unitPrice.toFixed(2)} {t('currency')}</p>
+                              <p className="text-primary font-black text-sm mt-2">{formatPrice(item.unitPrice)}</p>
 
                               <div className="flex items-center gap-3 mt-3">
                                 <div className="flex items-center bg-muted rounded-xl p-1">
-                                  <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm">
+                                  <button onClick={() => updateQuantity(item.key, item.quantity - 1)} aria-label={t('decrease_quantity')} className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm">
                                     <Minus className="w-3.5 h-3.5" />
                                   </button>
                                   <span className="text-xs font-black w-8 text-center">{item.quantity}</span>
-                                  <button onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm">
+                                  <button onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label={t('increase_quantity')} className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm">
                                     <Plus className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -127,6 +117,7 @@ export default function CartDrawer() {
                             </div>
                             <button
                                 onClick={() => removeItem(item.key)}
+                                aria-label={t('remove_item')}
                                 className="absolute top-4 right-4 p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -144,35 +135,47 @@ export default function CartDrawer() {
                         <div className="flex-1 relative">
                           <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
-                              placeholder="PROMO CODE"
+                              placeholder={t('promo_placeholder')}
+                              aria-label={t('promo_placeholder')}
                               value={promoInput}
                               onChange={(e) => setPromoInput(e.target.value)}
                               className="pl-10 rounded-2xl h-12 bg-muted/30 border-none font-bold text-xs"
                           />
                         </div>
-                        <Button onClick={applyPromo} disabled={applyingPromo} variant="outline" className="rounded-2xl h-12 px-6 font-bold text-xs border-primary/20 text-primary">APPLY</Button>
+                        <Button onClick={applyPromo} disabled={applyingPromo} variant="outline" className="rounded-2xl h-12 px-6 font-bold text-xs border-primary/20 text-primary uppercase">{t('apply')}</Button>
                       </div>
 
                       {/* Списки цен */}
                       <div className="space-y-3">
                         <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                          <span>Subtotal</span>
-                          <span>{subtotal.toFixed(2)} {t('currency')}</span>
+                          <span>{t('subtotal')}</span>
+                          <span>{formatPrice(subtotal)}</span>
                         </div>
                         {discountAmount > 0 && (
                             <div className="flex justify-between text-xs font-bold text-accent uppercase tracking-widest">
-                              <span>Discount ({promoCode})</span>
-                              <span>-{discountAmount.toFixed(2)} {t('currency')}</span>
+                              <span>{t('discount')} ({promoCode})</span>
+                              <span>−{formatPrice(discountAmount)}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                          <span>Delivery</span>
-                          <span>{deliveryFee > 0 ? `${deliveryFee.toFixed(2)} ${t('currency')}` : 'FREE'}</span>
+                          <span>{t('delivery')}</span>
+                          <span>{deliveryFee > 0 ? formatPrice(deliveryFee) : t('free')}</span>
                         </div>
+                        {deliveryFee > 0 && pricing.free_delivery_from > 0 && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {t('free_delivery_from', { amount: formatPrice(pricing.free_delivery_from) })}
+                            </p>
+                        )}
+                        {tax > 0 && (
+                            <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                              <span>{t('tax')}</span>
+                              <span>{formatPrice(tax)}</span>
+                            </div>
+                        )}
                         <div className="h-px bg-border my-4" />
                         <div className="flex justify-between items-end">
                           <span className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em]">{t('total')}</span>
-                          <span className="text-3xl font-black text-primary">{total.toFixed(2)} {t('currency')}</span>
+                          <span className="text-3xl font-black text-primary">{formatPrice(total)}</span>
                         </div>
                       </div>
 

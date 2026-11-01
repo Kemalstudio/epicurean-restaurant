@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function NutritionRing({ calories, protein, fat, carbs }) {
+  const { t } = useLanguage();
   const total = protein + fat + carbs || 1;
   const proteinPct = (protein / total) * 100;
   const fatPct = (fat / total) * 100;
@@ -12,9 +14,9 @@ export default function NutritionRing({ calories, protein, fat, carbs }) {
   const circumference = 2 * Math.PI * radius;
 
   const segments = [
-    { pct: proteinPct, color: 'hsl(var(--accent))', label: 'Protein', value: protein },
-    { pct: fatPct, color: 'hsl(var(--primary))', label: 'Fat', value: fat },
-    { pct: carbsPct, color: 'hsl(var(--secondary))', label: 'Carbs', value: carbs },
+    { pct: proteinPct, color: 'hsl(var(--accent))', label: t('protein'), value: protein },
+    { pct: fatPct, color: 'hsl(var(--primary))', label: t('fat'), value: fat },
+    { pct: carbsPct, color: 'hsl(var(--secondary))', label: t('carbs'), value: carbs },
   ];
 
   let offset = 0;

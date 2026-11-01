@@ -1,15 +1,46 @@
-import { useState, useCallback, createContext, useContext } from 'react';
+import { useState, useCallback, useEffect, createContext, useContext } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 
 const CartContext = createContext(null);
 
-export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [promoCode, setPromoCode] = useState(null);
-  const [promoDiscount, setPromoDiscount] = useState(0);
+const STORAGE_KEY = 'epicurean_cart_v1';
+// Fallback until /settings/public is loaded; the server is the source of truth and re-prices every order
+const DEFAULT_PRICING = { delivery_fee: 4.99, free_delivery_from: 50, tax_rate: 0.08 };
 
-  const addItem = useCallback((product, quantity = 1, size = null, addedIngredients = [], removedIngredients = [], extraPrice = 0) => {
-    const itemKey = `${product.id}-${size || 'default'}-${addedIngredients.sort().join(',')}-${removedIngredients.sort().join(',')}`;
+const round2 = (n) => Math.round(n * 100) / 100;
+
+function loadSavedCart() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && Array.isArray(saved.items)) return saved;
+  } catch {
+    // corrupted storage — start with an empty cart
+  }
+  return { items: [], promoCode: null, promoDiscount: 0 };
+}
+
+export function CartProvider({ children }) {
+  const { appPublicSettings } = useAuth();
+  const pricing = { ...DEFAULT_PRICING, ...(appPublicSettings?.public_settings?.pricing || {}) };
+
+  const [saved] = useState(loadSavedCart);
+  const [items, setItems] = useState(saved.items);
+  const [isOpen, setIsOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState(saved.promoCode);
+  const [promoDiscount, setPromoDiscount] = useState(saved.promoDiscount);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, promoCode, promoDiscount }));
+  }, [items, promoCode, promoDiscount]);
+
+  const addItem = useCallback((
+    product, quantity = 1, size = null,
+    addedIngredients = [], removedIngredients = [], extraPrice = 0,
+    addedIngredientIds = [], removedIngredientIds = []
+  ) => {
+    const addedIds = [...addedIngredientIds].sort();
+    const removedIds = [...removedIngredientIds].sort();
+    const itemKey = `${product.id}-${size || 'default'}-${addedIds.join(',')}-${removedIds.join(',')}`;
     setItems(prev => {
       const existing = prev.find(i => i.key === itemKey);
       if (existing) {
@@ -25,7 +56,9 @@ export function CartProvider({ children }) {
         size,
         addedIngredients,
         removedIngredients,
-        unitPrice: Math.round(unitPrice * 100) / 100,
+        addedIngredientIds: addedIds,
+        removedIngredientIds: removedIds,
+        unitPrice: round2(unitPrice),
         quantity,
       }];
     });
@@ -40,7 +73,7 @@ export function CartProvider({ children }) {
     if (quantity <= 0) {
       setItems(prev => prev.filter(i => i.key !== key));
     } else {
-      setItems(prev => prev.map(i => i.key === key ? { ...i, quantity } : i));
+      setItems(prev => prev.map(i => i.key === key ? { ...i, quantity: Math.min(quantity, 99) } : i));
     }
   }, []);
 
@@ -50,18 +83,19 @@ export function CartProvider({ children }) {
     setPromoDiscount(0);
   }, []);
 
-  const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
-  const discountAmount = subtotal * (promoDiscount / 100);
-  const deliveryFee = subtotal > 50 ? 0 : 4.99;
-  const tax = (subtotal - discountAmount) * 0.08;
-  const total = subtotal - discountAmount + deliveryFee + tax;
+  // Same formula as backend/pricing.js
+  const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
+  const discountAmount = round2(subtotal * (promoDiscount / 100));
+  const deliveryFee = subtotal > pricing.free_delivery_from ? 0 : pricing.delivery_fee;
+  const tax = round2((subtotal - discountAmount) * pricing.tax_rate);
+  const total = round2(subtotal - discountAmount + deliveryFee + tax);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <CartContext.Provider value={{
       items, isOpen, setIsOpen, addItem, removeItem, updateQuantity, clearCart,
       promoCode, setPromoCode, promoDiscount, setPromoDiscount,
-      subtotal, discountAmount, deliveryFee, tax, total, itemCount
+      subtotal, discountAmount, deliveryFee, tax, total, itemCount, pricing
     }}>
       {children}
     </CartContext.Provider>
