@@ -47,7 +47,7 @@ function CheckOption({ checked, onChange, label, extra }) {
         {checked && <Check className="h-5 w-5 text-white" strokeWidth={3} />}
       </span>
       <span className="flex-1">{label}</span>
-      {extra && <span className="text-[14px] font-semibold text-ember-green">{extra}</span>}
+      {extra && <span className="whitespace-nowrap text-[14px] font-semibold text-ember-green">{extra}</span>}
     </label>
   );
 }
@@ -122,14 +122,15 @@ export function ProductOptionsModal({ product, restaurant, initialSize, onClose 
             <span className="text-[22px] font-semibold">{formatPrice(unit * qty)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} className="flex h-9 w-9 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('decrease_quantity')}><Minus className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} className="flex h-10 w-10 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('decrease_quantity')}><Minus className="h-4 w-4" /></button>
             <span className="w-8 text-center text-[16px] font-bold" aria-live="polite">{qty}</span>
-            <button type="button" onClick={() => setQty(q => Math.min(99, q + 1))} className="flex h-9 w-9 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('increase_quantity')}><Plus className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setQty(q => Math.min(99, q + 1))} className="flex h-10 w-10 items-center justify-center rounded-full bg-ember-navy text-white" aria-label={t('increase_quantity')}><Plus className="h-4 w-4" /></button>
           </div>
         </div>
-        <div className="mt-6 flex items-center justify-end gap-8">
-          <button type="button" onClick={onClose} className="text-[14px] font-semibold underline underline-offset-2">{t('take_me_back')}</button>
-          <button type="button" onClick={confirm} className="btn-green relative h-[48px] w-[200px] text-[16px]">
+        {/* phones: full-width "Add" button with "Back" link below; from sm: side by side */}
+        <div className="mt-6 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-8">
+          <button type="button" onClick={onClose} className="min-h-[44px] px-2 text-[14px] font-semibold underline underline-offset-2">{t('take_me_back')}</button>
+          <button type="button" onClick={confirm} className="btn-green relative h-[48px] w-full text-[16px] sm:w-[200px]">
             <span className="absolute left-3 flex h-6 w-6 items-center justify-center rounded-full bg-white text-ember-green" aria-hidden="true"><ArrowRight className="h-4 w-4" /></span>
             {t('add_to_basket')}
           </button>
