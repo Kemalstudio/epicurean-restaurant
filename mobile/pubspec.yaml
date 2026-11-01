@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.5.6
   cached_network_image: ^4.0.3
   flutter_svg: ^2.3.2
+  lottie: ^3.7.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +65,7 @@ flutter:
 
   assets:
     - assets/brand/
+    - assets/lottie/
 
   # Poppins (Latin), PoppinsExt (Latin Extended: Turkmen letters), MontserratCyr (Cyrillic for Russian).
   # Converted from the website's self-hosted fonts (SIL Open Font License).

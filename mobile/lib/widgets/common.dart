@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/config.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import 'animated.dart';
 
 double numOf(dynamic v, [double f = 0]) =>
     v is num ? v.toDouble() : (double.tryParse('$v') ?? f);
@@ -157,14 +158,17 @@ class EmberHeader extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Badge(
-                            isLabelVisible: cart.count > 0,
-                            label: Text('${cart.count}'),
-                            backgroundColor: Ember.orange,
-                            child: const Icon(
-                              Icons.shopping_basket_outlined,
-                              color: Colors.white,
-                              size: 42,
+                          BounceOnChange(
+                            value: cart.count,
+                            child: Badge(
+                              isLabelVisible: cart.count > 0,
+                              label: Text('${cart.count}'),
+                              backgroundColor: Ember.orange,
+                              child: const Icon(
+                                Icons.shopping_basket_outlined,
+                                color: Colors.white,
+                                size: 42,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),

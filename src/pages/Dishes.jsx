@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ember/ProductCard';
+import { EmptyState } from '@/components/ember/LottieAnim';
 
 const PAGE = 20;
 
@@ -77,7 +78,7 @@ export default function Dishes() {
             })}
       </div>
 
-      {!loading && list.length === 0 && <p className="py-16 text-center text-[18px] font-semibold">{t('no_dishes')}</p>}
+      {!loading && list.length === 0 && <EmptyState anim="not_found" title={t('no_dishes')} text={t('no_dishes_desc')} />}
       {list.length > limit && (
         <div className="mt-10 text-center">
           <button type="button" onClick={() => setLimit(l => l + PAGE)} className="btn-navy h-[52px] text-[16px]">{t('show_more')}</button>

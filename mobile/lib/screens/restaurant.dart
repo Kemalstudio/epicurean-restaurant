@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import '../widgets/product.dart';
 import 'auth.dart';
@@ -53,7 +54,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
       builder: (context, snap) {
         if (snap.hasError) {
           return EmberScaffold(
-            children: [errorBox('${snap.error}', () => setState(_load))],
+            children: [errorBox(snap.error!, () => setState(_load))],
           );
         }
         if (!snap.hasData) {
@@ -61,9 +62,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.all(60),
-                child: Center(
-                  child: CircularProgressIndicator(color: Ember.orange),
-                ),
+                child: Center(child: EmberLottie(EmberAnim.loader, size: 72)),
               ),
             ],
           );
@@ -176,13 +175,10 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
         ),
         const SizedBox(height: 20),
         if (groups.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text(
-              t('no_dishes'),
-              textAlign: TextAlign.center,
-              style: Ember.text(16, color: Colors.black54),
-            ),
+          EmptyState(
+            anim: EmberAnim.notFound,
+            title: t('no_dishes'),
+            text: t('no_dishes_desc'),
           ),
         for (var gi = 0; gi < groups.length; gi++) ...[
           Row(

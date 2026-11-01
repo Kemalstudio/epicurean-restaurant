@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/LanguageContext';
+import LottieAnim from '@/components/ember/LottieAnim';
 
 export default function PageNotFound() {
     const { t } = useLanguage();
@@ -10,7 +11,8 @@ export default function PageNotFound() {
         <div className="flex min-h-[60vh] items-center justify-center p-6">
             <div className="max-w-md w-full text-center space-y-6">
                 <div className="space-y-2">
-                    <p className="text-[120px] font-bold leading-none text-ember-orange/25" aria-hidden="true">404</p>
+                    <LottieAnim name="not_found" size={220} />
+                    <p className="text-[56px] font-bold leading-none text-ember-orange/40" aria-hidden="true">404</p>
                     <div className="h-1 w-16 bg-primary/30 mx-auto rounded-full" />
                 </div>
 

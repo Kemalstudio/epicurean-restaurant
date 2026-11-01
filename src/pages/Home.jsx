@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronDown, Search, Bike, PackageCheck, ShoppingBag, Smartphone, Apple, Play } from 'lucide-react';
+import { ChevronRight, ChevronDown, Bike, PackageCheck, ShoppingBag, Smartphone, Apple, Play } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useLocationStore } from '@/lib/locationStore.jsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DealCard, DealCardSmall, CuisineTile, RestaurantTile, Photo } from '@/components/ember/Cards';
+import { EmptyState, errorAnim } from '@/components/ember/LottieAnim';
 
 const HERO_IMAGE = '/img/1604382354936-07c5d9983bd3-1100.webp';
 const APP_IMAGE = '/img/1512428559087-560fa5ceab42-1200.webp';
@@ -345,16 +346,13 @@ function Stats({ stats }) {
 
 export default function Home() {
   const { t } = useLanguage();
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['home'], queryFn: base44.market.home });
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['home'], queryFn: base44.market.home });
 
   return (
     <div className="ember-container pt-4 lg:pt-0">
       <Hero />
       {isError ? (
-        <div className="my-16 text-center">
-          <p className="text-[18px] font-semibold">{t('load_failed')}</p>
-          <button type="button" onClick={() => refetch()} className="btn-orange mt-4 h-[48px] text-[16px]"><Search className="h-4 w-4" aria-hidden="true" />{t('try_again')}</button>
-        </div>
+        <EmptyState anim={errorAnim(error)} title={t('load_failed')} action={t('try_again')} onAction={() => refetch()} />
       ) : (
         <>
           <Deals deals={data?.deals || []} cuisines={data?.cuisines || []} loading={isLoading} />

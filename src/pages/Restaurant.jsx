@@ -16,6 +16,7 @@ import ProductCard from '@/components/ember/ProductCard';
 import BasketPanel from '@/components/ember/BasketPanel';
 import { Photo, OfferCard, RestaurantTile } from '@/components/ember/Cards';
 import { PopupShell } from '@/components/ember/Popups';
+import { EmptyState, errorAnim } from '@/components/ember/LottieAnim';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -311,9 +312,8 @@ export default function RestaurantPage() {
   if (isError || !r) {
     const notFound = error?.response?.status === 404;
     return (
-      <div className="ember-container py-24 text-center">
-        <h1 className="text-[32px] font-bold">{notFound ? t('restaurant_not_found') : t('load_failed')}</h1>
-        <Link to="/restaurants" className="btn-orange mt-6 h-[50px] text-[16px]">{t('browse_restaurants')}</Link>
+      <div className="ember-container py-10">
+        <EmptyState anim={notFound ? 'not_found' : errorAnim(error)} title={notFound ? t('restaurant_not_found') : t('load_failed')} action={t('browse_restaurants')} to="/restaurants" />
       </div>
     );
   }
@@ -373,7 +373,7 @@ export default function RestaurantPage() {
               {r.offers.map(o => <OfferCard key={o.id} offer={o} restaurantName={t('special_offer')} onClick={() => applyOffer(o)} />)}
             </div>
           )}
-          {groups.length === 0 && <p className="py-16 text-center text-[16px] text-black/60">{t('no_dishes')}</p>}
+          {groups.length === 0 && <EmptyState anim="not_found" title={t('no_dishes')} text={t('no_dishes_desc')} size={160} />}
           {groups.map((g, gi) => (
             <section key={g.id} className={gi > 0 ? 'mt-12' : ''} aria-labelledby={`sec-${g.id}`}>
               <div className="flex items-center justify-between gap-4 px-2">

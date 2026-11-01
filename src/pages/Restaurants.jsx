@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RestaurantCard, DealCard } from '@/components/ember/Cards';
+import { EmptyState, errorAnim } from '@/components/ember/LottieAnim';
 
 /** All restaurants with cuisine / text / area filters. `mode="offers"` shows only discounted ones. */
 export default function Restaurants({ mode = 'all' }) {
@@ -23,7 +24,7 @@ export default function Restaurants({ mode = 'all' }) {
   };
 
   const { data: home } = useQuery({ queryKey: ['home'], queryFn: base44.market.home, staleTime: 60000 });
-  const { data: list = [], isLoading, isError, refetch } = useQuery({
+  const { data: list = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['restaurants', cuisine, area, params.get('q') || ''],
     queryFn: () => base44.market.restaurants({ cuisine, area, q: params.get('q') || '' }),
   });
@@ -68,10 +69,7 @@ export default function Restaurants({ mode = 'all' }) {
       <p className="mt-6 text-[15px] text-black/60" aria-live="polite">{isLoading ? t('loading') : t('restaurants_found', { count: shown.length })}</p>
 
       {isError ? (
-        <div className="py-16 text-center">
-          <p className="text-[18px] font-semibold">{t('load_failed')}</p>
-          <button type="button" onClick={() => refetch()} className="btn-orange mt-4 h-[48px] text-[16px]">{t('try_again')}</button>
-        </div>
+        <EmptyState anim={errorAnim(error)} title={t('load_failed')} action={t('try_again')} onAction={() => refetch()} />
       ) : (
         <div className={`mt-6 grid gap-6 sm:grid-cols-2 ${mode === 'offers' ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'}`}>
           {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-[16/12] rounded-card" />)
@@ -80,10 +78,7 @@ export default function Restaurants({ mode = 'all' }) {
       )}
 
       {!isLoading && !isError && shown.length === 0 && (
-        <div className="py-16 text-center">
-          <p className="text-[20px] font-semibold">{t('no_restaurants')}</p>
-          <p className="mt-2 text-black/60">{t('no_restaurants_desc')}</p>
-        </div>
+        <EmptyState anim="not_found" title={t('no_restaurants')} text={t('no_restaurants_desc')} />
       )}
 
       {mode === 'offers' && (

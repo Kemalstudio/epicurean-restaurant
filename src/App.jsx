@@ -29,6 +29,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import LottieAnim from '@/components/ember/LottieAnim';
 
 // Management pages are loaded on demand (they include charts and editors customers never need)
 const OwnerDashboard = lazy(() => import('@/pages/OwnerDashboard'));
@@ -36,7 +37,7 @@ const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
 
 const PageSpinner = () => (
     <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-ember-gray border-t-ember-orange" />
+        <LottieAnim name="loader" size={80} />
     </div>
 );
 
@@ -54,7 +55,7 @@ const AppRoutes = () => {
             <div className="fixed inset-0 flex items-center justify-center bg-white">
                 <div className="flex flex-col items-center gap-5">
                     <img src="/brand/ember-logo.svg" alt="Ember" className="h-12 w-auto" />
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-ember-gray border-t-ember-orange" role="status" aria-label={t('app_loading')} />
+                    <LottieAnim name="loader" size={80} label={t('app_loading')} />
                 </div>
             </div>
         );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import 'restaurant.dart';
 import 'restaurants.dart';
@@ -46,16 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const _Hero(),
             const SizedBox(height: 28),
             if (snap.hasError)
-              _ErrorBox(
-                message: '${snap.error}',
-                onRetry: () => setState(_load),
-              )
+              ErrorState(error: snap.error!, onRetry: () => setState(_load))
             else if (data == null)
               const Padding(
                 padding: EdgeInsets.all(40),
-                child: Center(
-                  child: CircularProgressIndicator(color: Ember.orange),
-                ),
+                child: Center(child: EmberLottie(EmberAnim.loader, size: 72)),
               )
             else ...[
               _deals(context, data),
@@ -520,36 +516,6 @@ class _KnowMoreState extends State<_KnowMore> {
   }
 }
 
-class _ErrorBox extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorBox({required this.message, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final t = context.read<AppState>().t;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          const Icon(Icons.wifi_off, size: 48, color: Colors.black26),
-          const SizedBox(height: 8),
-          Text(
-            t('load_failed'),
-            style: Ember.text(18, weight: FontWeight.w600),
-          ),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: Ember.text(13, color: Colors.black54),
-          ),
-          const SizedBox(height: 16),
-          OrangeButton(t('try_again'), onPressed: onRetry, height: 46),
-        ],
-      ),
-    );
-  }
-}
-
 /// Shared retry box for other screens.
-Widget errorBox(String message, VoidCallback onRetry) =>
-    _ErrorBox(message: message, onRetry: onRetry);
+Widget errorBox(Object error, VoidCallback onRetry) =>
+    ErrorState(error: error, onRetry: onRetry);

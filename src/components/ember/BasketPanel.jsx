@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cartStore.jsx';
 import { useLanguage } from '@/lib/LanguageContext';
 import { base44, apiErrorMessage } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
+import LottieAnim from './LottieAnim';
 
 /** Basket header icon: basket with a check badge, like the kit's "Full Shopping Basket". */
 export function BasketIcon({ className = 'h-[58px] w-[58px]' }) {
@@ -96,7 +97,7 @@ export default function BasketPanel({ onCheckout, compact = false }) {
 
       {items.length === 0 ? (
         <div className="px-6 py-12 text-center">
-          <ShoppingBasket className="mx-auto mb-3 h-12 w-12 text-black/20" aria-hidden="true" />
+          <LottieAnim name="empty_basket" size={150} />
           <p className="text-[16px] font-semibold text-ember-navy">{t('cart_empty')}</p>
           <p className="mt-1 text-[14px] text-black/60">{t('cart_empty_desc')}</p>
           <Link to="/restaurants" onClick={onCheckout} className="btn-orange mt-6 h-[48px] text-[16px]">{t('browse_restaurants')}</Link>

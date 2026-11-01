@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, CheckCircle, Clock, Package, Truck, Home, XCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import LottieAnim from '@/components/ember/LottieAnim';
 
 const steps = [
   { key: 'received', icon: CheckCircle },
@@ -40,6 +41,11 @@ export default function OrderTracker({ order, onClose }) {
         </div>
         <button onClick={onClose} className="p-1" aria-label={t('close')}><X className="w-5 h-5 text-muted-foreground" /></button>
       </div>
+
+      {/* Live animation while the order is cooked or on the way */}
+      {['preparing', 'packaging', 'out_for_delivery'].includes(order.status) && (
+        <LottieAnim name={order.status === 'out_for_delivery' ? 'delivery' : 'loader'} size={130} className="mb-4" />
+      )}
 
       {/* Timeline */}
       <ol className="relative">

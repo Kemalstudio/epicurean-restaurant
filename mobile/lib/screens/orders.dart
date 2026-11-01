@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import 'shell.dart';
 
@@ -39,10 +40,17 @@ class OrderSuccessScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(28),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 64,
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const EmberLottie(
+                        EmberAnim.success,
+                        size: 110,
+                        repeat: false,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -296,9 +304,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
           const SizedBox(height: 12),
           if (_mine == null)
-            const Center(child: CircularProgressIndicator(color: Ember.orange)),
+            const Center(child: EmberLottie(EmberAnim.loader, size: 72)),
           if (_mine != null && _mine!.isEmpty)
-            Text(t('no_orders'), style: Ember.text(15, color: Colors.black54)),
+            EmptyState(anim: EmberAnim.emptyBasket, title: t('no_orders')),
           for (final o in _mine ?? const <Map<String, dynamic>>[])
             Card(
               margin: const EdgeInsets.only(bottom: 12),
@@ -403,6 +411,18 @@ class OrderTrackerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Live animation for orders that are being cooked or are on the way
+          if (status == 'out_for_delivery' ||
+              status == 'preparing' ||
+              status == 'packaging')
+            Center(
+              child: EmberLottie(
+                status == 'out_for_delivery'
+                    ? EmberAnim.delivery
+                    : EmberAnim.loader,
+                size: compact ? 90 : 130,
+              ),
+            ),
           if (!compact) ...[
             Text(
               t('tracking_order', {'number': order['order_number']}),

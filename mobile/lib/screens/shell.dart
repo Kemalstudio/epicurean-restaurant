@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import 'auth.dart';
 import 'basket.dart';
@@ -361,7 +362,7 @@ class Root extends StatelessWidget {
             children: [
               EmberLogo(height: 48),
               SizedBox(height: 24),
-              CircularProgressIndicator(color: Ember.orange),
+              EmberLottie(EmberAnim.loader, size: 72),
             ],
           ),
         ),

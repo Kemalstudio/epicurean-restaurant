@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Phone, User, CreditCard, Wallet, ArrowLeft, ArrowRight, Mail, Bike, Store, ShoppingBasket } from 'lucide-react';
+import { MapPin, Phone, User, CreditCard, Wallet, ArrowLeft, ArrowRight, Mail, Bike, Store } from 'lucide-react';
 import { useCart } from '@/lib/cartStore.jsx';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -8,6 +8,7 @@ import { useLocationStore } from '@/lib/locationStore.jsx';
 import { base44, apiErrorMessage } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import { BasketIcon } from '@/components/ember/BasketPanel';
+import LottieAnim from '@/components/ember/LottieAnim';
 
 const PAYMENT_OPTIONS = [
   { value: 'cash', labelKey: 'pay_cash', icon: Wallet },
@@ -78,7 +79,7 @@ export default function Checkout() {
     return (
       <div className="ember-container flex min-h-[50vh] items-center justify-center py-16">
         <div className="text-center">
-          <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-black/20" aria-hidden="true" />
+          <LottieAnim name="empty_basket" size={170} />
           <h1 className="text-[28px] font-bold">{t('cart_empty')}</h1>
           <p className="mt-2 text-black/60">{t('cart_empty_desc')}</p>
           <Link to="/restaurants" className="btn-orange mt-6 h-[52px] text-[16px]">{t('browse_restaurants')}</Link>

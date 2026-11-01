@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import 'home.dart';
 import 'restaurant.dart';
@@ -173,14 +174,12 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
           future: _future,
           builder: (context, snap) {
             if (snap.hasError) {
-              return errorBox('${snap.error}', () => setState(_load));
+              return errorBox(snap.error!, () => setState(_load));
             }
             if (!snap.hasData) {
               return const Padding(
                 padding: EdgeInsets.all(40),
-                child: Center(
-                  child: CircularProgressIndicator(color: Ember.orange),
-                ),
+                child: Center(child: EmberLottie(EmberAnim.loader, size: 72)),
               );
             }
             var list = snap.data!
@@ -195,21 +194,10 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
                   .toList();
             }
             if (list.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  children: [
-                    Text(
-                      t('no_restaurants'),
-                      style: Ember.text(18, weight: FontWeight.w600),
-                    ),
-                    Text(
-                      t('no_restaurants_desc'),
-                      textAlign: TextAlign.center,
-                      style: Ember.text(14, color: Colors.black54),
-                    ),
-                  ],
-                ),
+              return EmptyState(
+                anim: EmberAnim.notFound,
+                title: t('no_restaurants'),
+                text: t('no_restaurants_desc'),
               );
             }
             return Column(

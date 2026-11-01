@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/state.dart';
 import '../core/theme.dart';
+import 'animated.dart';
 import 'common.dart';
 
 /// "My Basket" (kit: Mobile Cart).
@@ -60,12 +61,7 @@ class BasketView extends StatelessWidget {
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  const Icon(
-                    Icons.shopping_basket_outlined,
-                    size: 48,
-                    color: Colors.black26,
-                  ),
-                  const SizedBox(height: 12),
+                  const EmberLottie(EmberAnim.emptyBasket, size: 150),
                   Text(
                     t('cart_empty'),
                     style: Ember.text(

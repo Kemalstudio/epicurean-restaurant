@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Package, Search, Store, RotateCcw } from 'lucide-react';
+import { Search, Store, RotateCcw } from 'lucide-react';
 import { base44, apiErrorMessage } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
 import OrderTracker from '@/components/dashboard/OrderTracker';
+import { EmptyState } from '@/components/ember/LottieAnim';
 
 const ACTIVE = (o) => !['delivered', 'cancelled'].includes(o.status);
 const STATUS_STYLE = {
@@ -89,11 +90,7 @@ export default function Orders() {
             {isLoading && <p className="mt-6 text-black/60">{t('loading')}</p>}
             {isError && <p className="mt-6 font-semibold text-ember-red">{t('load_failed')}</p>}
             {!isLoading && orders.length === 0 && (
-              <div className="mt-6 rounded-card border border-dashed border-ember-gray-dark p-10 text-center">
-                <Package className="mx-auto h-12 w-12 text-black/20" aria-hidden="true" />
-                <p className="mt-3 text-[18px] font-semibold">{t('no_orders')}</p>
-                <Link to="/restaurants" className="btn-orange mt-5 h-[48px] text-[16px]">{t('browse_restaurants')}</Link>
-              </div>
+              <EmptyState anim="empty_basket" title={t('no_orders')} action={t('browse_restaurants')} to="/restaurants" />
             )}
             <ul className="mt-6 space-y-4">
               {orders.map(o => (
