@@ -59,8 +59,9 @@ export function CuisineTile({ cuisine }) {
       <span className="block aspect-[238/203] overflow-hidden bg-ember-section">
         <Photo src={cuisine.image_url} className="h-full w-full transition-transform duration-500 group-hover:scale-105" />
       </span>
-      <span className="block px-[22px] py-2.5">
-        <span className="block truncate text-[16px] font-bold text-ember-orange md:text-[18px]">{cuisine.name}</span>
+      <span className="block px-3.5 py-2.5 md:px-[22px]">
+        {/* two lines instead of "Бургеры и ф…" in long translations */}
+        <span className="line-clamp-2 block text-[16px] font-bold leading-[1.2] text-ember-orange md:text-[18px]">{cuisine.name}</span>
         <span className="block text-[13px] text-white">{t('restaurants_count', { count: cuisine.restaurant_count })}</span>
       </span>
     </Link>

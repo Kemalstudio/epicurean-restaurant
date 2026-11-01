@@ -113,24 +113,24 @@ function Deals({ deals, cuisines, loading }) {
   if (!loading && deals.length === 0) return null;
   return (
     <section className="mt-8 lg:mt-[63px]" aria-labelledby="deals-title">
-      <div className="flex items-center justify-between gap-4 lg:pl-[21px]">
+      <div className="flex flex-wrap items-center justify-between gap-4 lg:pl-[21px]">
         <h2 id="deals-title" className="text-[16px] font-bold lg:text-[32px]">
           {t('deals_title', { percent: max })} <span aria-hidden="true">🎊</span> <span className="hidden lg:inline">{t('deals_title_suffix')}</span>
         </h2>
         {/* Desktop tabs */}
-        <div className="hidden items-center gap-2 lg:flex" role="tablist" aria-label={t('filter_by_cuisine')}>
+        <div className="hidden flex-wrap items-center gap-1 lg:flex xl:gap-2" role="tablist" aria-label={t('filter_by_cuisine')}>
           {[{ slug: 'all', name: t('filter_all') }, ...tabs].map(tab => (
             <button key={tab.slug} type="button" role="tab" aria-selected={filter === tab.slug} onClick={() => setFilter(tab.slug)}
-              className={`h-[61px] rounded-pill px-7 text-[16px] ${filter === tab.slug ? 'border border-ember-orange text-ember-orange' : 'text-black'}`}>
+              className={`h-[52px] whitespace-nowrap rounded-pill px-5 text-[16px] xl:h-[61px] xl:px-7 ${filter === tab.slug ? 'border border-ember-orange text-ember-orange' : 'text-black'}`}>
               {tab.name}
             </button>
           ))}
         </div>
         {/* Mobile select */}
-        <label className="relative flex h-[38px] shrink-0 items-center rounded-pill border border-ember-navy pl-8 pr-3 lg:hidden">
+        <label className="relative flex h-[40px] shrink-0 items-center rounded-pill border border-ember-navy pl-8 pr-3 lg:hidden">
           <span className="sr-only">{t('filter_by_cuisine')}</span>
           <ChevronDown className="pointer-events-none absolute left-2 h-[18px] w-[18px] rounded-full bg-ember-navy p-0.5 text-white" aria-hidden="true" />
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="h-full max-w-[140px] cursor-pointer appearance-none bg-transparent pr-1 text-[12px] outline-none">
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="h-full min-w-[56px] max-w-[140px] cursor-pointer appearance-none bg-transparent pr-1 text-[12px] outline-none">
             <option value="all">{t('filter_all')}</option>
             {tabs.map(tab => <option key={tab.slug} value={tab.slug}>{tab.name}</option>)}
           </select>
@@ -232,7 +232,7 @@ function JoinCard({ image, tab, kicker, title, to }) {
       <div className="absolute bottom-[10%] left-[9%]">
         <p className="text-[15px] font-medium text-ember-orange md:text-[18px]">{kicker}</p>
         <h3 className="text-[26px] font-bold leading-tight text-white md:text-[44px]">{title}</h3>
-        <Link to={to} className="btn-orange mt-3 h-[34px] px-6 text-[13px] md:mt-6 md:h-[52px] md:w-[205px] md:text-[18px]">{t('get_started')}</Link>
+        <Link to={to} className="btn-orange mt-3 h-[40px] px-6 text-[14px] md:mt-6 md:h-[52px] md:w-[205px] md:text-[18px]">{t('get_started')}</Link>
       </div>
     </div>
   );
@@ -260,7 +260,7 @@ function HowItWorks() {
       <div className="grid gap-5 sm:grid-cols-3">
         {steps.map(s => (
           <div key={s.title} className="flex flex-col items-center rounded-card bg-ember-gray px-4 pb-6 pt-8 text-center">
-            <h4 className="text-[18px] font-bold text-ember-navy">{s.title}</h4>
+            <h4 className="break-words text-[16px] font-bold text-ember-navy xl:text-[18px]">{s.title}</h4>
             <s.icon className={`my-6 h-[96px] w-[96px] ${s.color}`} strokeWidth={1.3} aria-hidden="true" />
             <p className="text-[15px] font-medium text-black">{s.text}</p>
           </div>
