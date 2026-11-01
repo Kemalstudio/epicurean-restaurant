@@ -7,7 +7,7 @@ export default function Logo({ variant = 'dark', className = 'h-[44px] md:h-[53p
       src={variant === 'white' ? '/brand/ember-logo-white.svg' : '/brand/ember-logo.svg'}
       alt="Ember"
       className={className}
-      width="215"
+      width="193"
       height="47"
     />
   );
