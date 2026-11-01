@@ -42,6 +42,9 @@ class LabelValueRow extends StatelessWidget {
 
 /// Network photo with gray placeholder (kit placeholder color).
 class NetImage extends StatelessWidget {
+  /// Widget tests have no network or cache directory: show placeholders instead.
+  static bool disableForTests = false;
+
   final String? url;
   final BoxFit fit;
   final double? width, height;
@@ -60,7 +63,7 @@ class NetImage extends StatelessWidget {
       height: height,
       color: Ember.gray,
     );
-    if (src.isEmpty) return placeholder;
+    if (src.isEmpty || disableForTests) return placeholder;
     return CachedNetworkImage(
       imageUrl: src,
       fit: fit,

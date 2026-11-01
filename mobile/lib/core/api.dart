@@ -17,6 +17,9 @@ class Api {
   static final Api instance = Api._();
 
   String? token;
+
+  /// HTTP client; tests replace it with a MockClient that serves recorded responses.
+  http.Client client = http.Client();
   String lang = 'en';
   static const _offline = {
     'en': 'Server is not reachable. Check your connection.',
@@ -56,16 +59,19 @@ class Api {
   }
 
   Future<dynamic> get(String path, [Map<String, String>? query]) =>
-      _send(() => http.get(_uri(path, query), headers: _headers));
+      _send(() => client.get(_uri(path, query), headers: _headers));
   Future<dynamic> post(String path, [Object? body]) => _send(
-    () =>
-        http.post(_uri(path), headers: _headers, body: jsonEncode(body ?? {})),
+    () => client.post(
+      _uri(path),
+      headers: _headers,
+      body: jsonEncode(body ?? {}),
+    ),
   );
   Future<dynamic> put(String path, Object body) => _send(
-    () => http.put(_uri(path), headers: _headers, body: jsonEncode(body)),
+    () => client.put(_uri(path), headers: _headers, body: jsonEncode(body)),
   );
   Future<dynamic> delete(String path) =>
-      _send(() => http.delete(_uri(path), headers: _headers));
+      _send(() => client.delete(_uri(path), headers: _headers));
 
   // ---- endpoints ----
   Future<Map<String, dynamic>> home() async =>
