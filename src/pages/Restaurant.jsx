@@ -112,12 +112,12 @@ function InfoSection({ r }) {
   const { t } = useLanguage();
   const hours = Array.isArray(r.hours) ? r.hours : null;
   return (
-    <section className="mt-12 grid overflow-hidden rounded-card bg-[#FBFBFB] shadow-card md:grid-cols-[1fr_1fr_0.8fr] lg:mt-[63px]" aria-label={t('restaurant_info')}>
+    <section className="mt-12 grid grid-cols-1 overflow-hidden rounded-card bg-[#FBFBFB] shadow-card md:grid-cols-2 lg:mt-[63px] lg:grid-cols-[1fr_1fr_0.8fr]" aria-label={t('restaurant_info')}>
       <div className="p-8 lg:px-7 lg:py-14">
         <h2 className="flex items-center gap-3 text-[24px] font-bold text-black lg:text-[28px]"><Truck className="h-9 w-9" aria-hidden="true" />{t('delivery_information')}</h2>
         <dl className="mt-7 space-y-3 text-[15px]">
           {hours ? DAYS.map((d, i) => (
-            <div key={d} className="flex gap-1"><dt className="font-bold">{t(d)}:</dt><dd>{hours[i] ? `${hours[i][0]}–${hours[i][1]}` : t('closed_now')}</dd></div>
+            <div key={d} className="flex flex-wrap gap-x-1"><dt className="font-bold">{t(d)}:</dt><dd>{hours[i] ? `${hours[i][0]}–${hours[i][1]}` : t('closed_now')}</dd></div>
           )) : <p>{t('hours_not_set')}</p>}
           <div className="flex gap-1 pt-1"><dt className="font-bold">{t('estimated_delivery_time')}:</dt><dd>{r.delivery_time} {t('min_short')}</dd></div>
         </dl>
@@ -128,11 +128,11 @@ function InfoSection({ r }) {
         {r.phone && <><p className="mt-4 text-[15px] font-bold">{t('phone_number')}</p><a href={`tel:${r.phone.replace(/[^\d+]/g, '')}`} className="text-[18px] hover:text-ember-orange">{r.phone}</a></>}
         {r.website && <><p className="mt-4 text-[15px] font-bold">{t('website')}</p><a href={r.website} target="_blank" rel="noopener noreferrer" className="break-all text-[18px] hover:text-ember-orange">{r.website}</a></>}
       </div>
-      <div className="bg-ember-navy p-8 text-white lg:px-8 lg:py-14">
+      <div className="bg-ember-navy p-8 text-white md:col-span-2 lg:col-span-1 lg:px-8 lg:py-14">
         <h2 className="flex items-center gap-3 text-[24px] font-bold lg:text-[28px]"><CalendarClock className="h-8 w-8" aria-hidden="true" />{t('operational_times')}</h2>
         <dl className="mt-7 space-y-3 text-[15px]">
           {hours ? DAYS.map((d, i) => (
-            <div key={d} className="flex gap-1"><dt className="font-bold">{t(d)}:</dt><dd>{hours[i] ? `${hours[i][0]}–${hours[i][1]}` : t('closed_now')}</dd></div>
+            <div key={d} className="flex flex-wrap gap-x-1"><dt className="font-bold">{t(d)}:</dt><dd>{hours[i] ? `${hours[i][0]}–${hours[i][1]}` : t('closed_now')}</dd></div>
           )) : <p>{t('hours_not_set')}</p>}
         </dl>
       </div>
@@ -220,8 +220,8 @@ function Reviews({ r }) {
             {isAuthenticated
               ? <button type="button" onClick={() => setWriting(true)} className="btn-navy h-[48px] text-[15px]"><MessageSquarePlus className="h-4 w-4" aria-hidden="true" />{t('write_review')}</button>
               : <Link to={`/login?redirect=/r/${r.slug}`} className="text-[15px] font-semibold underline">{t('login_to_review')}</Link>}
-            <button type="button" onClick={() => setPage(p => (p - 1 + pages) % pages)} className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-ember-orange text-ember-navy lg:h-[66px] lg:w-[66px]" aria-label={t('previous')}><ChevronLeft className="h-8 w-8" /></button>
-            <button type="button" onClick={() => setPage(p => (p + 1) % pages)} className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-ember-orange text-ember-navy lg:h-[66px] lg:w-[66px]" aria-label={t('next')}><ChevronRight className="h-8 w-8" /></button>
+            <button type="button" onClick={() => setPage(p => (p - 1 + pages) % pages)} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-ember-orange text-ember-navy lg:h-[66px] lg:w-[66px]" aria-label={t('previous')}><ChevronLeft className="h-8 w-8" /></button>
+            <button type="button" onClick={() => setPage(p => (p + 1) % pages)} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-ember-orange text-ember-navy lg:h-[66px] lg:w-[66px]" aria-label={t('next')}><ChevronRight className="h-8 w-8" /></button>
           </div>
         </div>
         {r.reviews.length === 0 ? (
@@ -344,7 +344,7 @@ export default function RestaurantPage() {
         </label>
       </div>
 
-      <div className="mt-8 grid gap-5 lg:mt-[39px] lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,340px)] 2xl:grid-cols-[minmax(0,367px)_minmax(0,1fr)_minmax(0,367px)]">
+      <div className="mt-8 grid grid-cols-1 gap-5 lg:mt-[39px] lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,340px)] 2xl:grid-cols-[minmax(0,367px)_minmax(0,1fr)_minmax(0,367px)]">
         {/* Left: menu */}
         <aside className="space-y-5">
           <div className="hidden lg:block"><MenuNav sections={r.sections} active={section} onSelect={setSection} /></div>
@@ -376,11 +376,11 @@ export default function RestaurantPage() {
           {groups.length === 0 && <EmptyState anim="not_found" title={t('no_dishes')} text={t('no_dishes_desc')} size={160} />}
           {groups.map((g, gi) => (
             <section key={g.id} className={gi > 0 ? 'mt-12' : ''} aria-labelledby={`sec-${g.id}`}>
-              <div className="flex items-center justify-between gap-4 px-2">
-                <h2 id={`sec-${g.id}`} className="text-[28px] font-semibold lg:text-[32px]">{g.name}</h2>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-2">
+                <h2 id={`sec-${g.id}`} className="min-w-0 text-[28px] font-semibold lg:text-[32px]">{g.name}</h2>
                 {gi === 0 && (
                   <button type="button" onClick={() => setSort(s => (s === 'none' ? 'asc' : s === 'asc' ? 'desc' : 'none'))}
-                    className="flex h-[52px] items-center gap-3 rounded-pill border border-[#CFCFCF] bg-[#F6F6F6] pl-8 pr-3 text-[16px]">
+                    className="flex h-[52px] max-w-full items-center gap-3 whitespace-nowrap rounded-pill border border-[#CFCFCF] bg-[#F6F6F6] pl-5 pr-3 text-[14px] sm:pl-8 sm:text-[16px]">
                     {sort === 'none' ? t('sort_by_price') : sort === 'asc' ? t('sort_price_low') : t('sort_price_high')}
                     <ArrowDownUp className="h-[30px] w-[30px] rounded-full bg-black/40 p-1.5 text-white" aria-hidden="true" />
                   </button>
