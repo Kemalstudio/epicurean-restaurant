@@ -290,9 +290,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             children: [
                               Icon(p.$2),
                               const SizedBox(width: 10),
-                              Text(
-                                p.$3,
-                                style: Ember.text(15, weight: FontWeight.w600),
+                              Expanded(
+                                child: Text(
+                                  p.$3,
+                                  style: Ember.text(
+                                    15,
+                                    weight: FontWeight.w600,
+                                    height: 1.3,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -322,12 +328,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             size: 40,
                           ),
                           const SizedBox(width: 16),
-                          Text(
-                            t('order_summary'),
-                            style: Ember.text(
-                              24,
-                              weight: FontWeight.w600,
-                              color: Colors.white,
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                t('order_summary'),
+                                style: Ember.text(
+                                  24,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -382,33 +394,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           const SizedBox(height: 12),
                           Container(
-                            height: 64,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            constraints: const BoxConstraints(minHeight: 64),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Ember.orange.withValues(alpha: 0.8),
                               border: Border.all(color: Colors.black),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  t('total_to_pay'),
-                                  style: Ember.text(
-                                    17,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+                            child: LabelValueRow(
+                              label: Text(
+                                t('total_to_pay'),
+                                style: Ember.text(
+                                  17,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white,
+                                  height: 1.2,
                                 ),
-                                const Spacer(),
-                                Text(
-                                  app.price(cart.total),
-                                  style: Ember.text(
-                                    24,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+                              ),
+                              value: Text(
+                                app.price(cart.total),
+                                style: Ember.text(
+                                  24,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -461,27 +474,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       border: Border.all(color: Colors.black),
       borderRadius: BorderRadius.circular(Ember.radius),
     ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(title, style: Ember.text(19, weight: FontWeight.w600)),
-        const SizedBox(height: 14),
-        child,
-      ],
+    // Transparent Material so ListTile ink splashes paint above the card colour.
+    child: Material(
+      type: MaterialType.transparency,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Ember.text(19, weight: FontWeight.w600)),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
     ),
   );
 
   Widget _sum(String label, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      children: [
-        Text(
-          '$label:',
-          style: Ember.text(16, weight: FontWeight.w600, color: Ember.navy),
+    child: LabelValueRow(
+      label: Text(
+        '$label:',
+        style: Ember.text(
+          16,
+          weight: FontWeight.w600,
+          color: Ember.navy,
+          height: 1.2,
         ),
-        const Spacer(),
-        Text(value, style: Ember.text(16)),
-      ],
+      ),
+      value: Text(value, style: Ember.text(16)),
     ),
   );
 }

@@ -268,18 +268,21 @@ class _SizeButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: Ember.text(
-                  14,
-                  weight: FontWeight.w700,
-                  color: dark ? Colors.white : Colors.black,
+              // Long labels ("Add to basket" in ru/tk, big fonts) wrap instead of overflowing.
+              Flexible(
+                child: Text(
+                  label,
+                  style: Ember.text(
+                    14,
+                    weight: FontWeight.w700,
+                    color: dark ? Colors.white : Colors.black,
+                    height: 1.2,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Container(
-                height: 39,
-                constraints: const BoxConstraints(minWidth: 90),
+                constraints: const BoxConstraints(minWidth: 90, minHeight: 39),
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
@@ -456,26 +459,30 @@ class _OptionsSheetState extends State<OptionsSheet> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Container(
-                        height: 54,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Ember.orange.withValues(alpha: 0.8),
-                          border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
+                      Expanded(
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 54),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Ember.orange.withValues(alpha: 0.8),
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: LabelValueRow(
+                            gap: 8,
+                            label: Text(
                               app.t('total_to_pay'),
                               style: Ember.text(
-                                14,
+                                13,
                                 weight: FontWeight.w600,
                                 color: Colors.white,
+                                height: 1.2,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
+                            value: Text(
                               app.price(unit * qty),
                               style: Ember.text(
                                 22,
@@ -483,10 +490,10 @@ class _OptionsSheetState extends State<OptionsSheet> {
                                 color: Colors.white,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       IconButton.filled(
                         onPressed: qty > 1 ? () => setState(() => qty--) : null,
                         icon: const Icon(Icons.remove),

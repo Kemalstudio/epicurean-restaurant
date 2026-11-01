@@ -44,13 +44,19 @@ class BasketView extends StatelessWidget {
                   color: Colors.white,
                   size: 58,
                 ),
-                const SizedBox(width: 28),
-                Text(
-                  t('my_basket'),
-                  style: Ember.text(
-                    28,
-                    weight: FontWeight.w600,
-                    color: Colors.white,
+                const SizedBox(width: 20),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      t('my_basket'),
+                      style: Ember.text(
+                        28,
+                        weight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -145,33 +151,34 @@ class BasketView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    height: 70,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    constraints: const BoxConstraints(minHeight: 70),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Ember.orange.withValues(alpha: 0.8),
                       border: Border.all(color: Colors.black),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      children: [
-                        Text(
-                          t('total_to_pay'),
-                          style: Ember.text(
-                            18,
-                            weight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                    child: LabelValueRow(
+                      label: Text(
+                        t('total_to_pay'),
+                        style: Ember.text(
+                          18,
+                          weight: FontWeight.w600,
+                          color: Colors.white,
+                          height: 1.2,
                         ),
-                        const Spacer(),
-                        Text(
-                          app.price(cart.total),
-                          style: Ember.text(
-                            26,
-                            weight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                      ),
+                      value: Text(
+                        app.price(cart.total),
+                        style: Ember.text(
+                          26,
+                          weight: FontWeight.w600,
+                          color: Colors.white,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -265,15 +272,17 @@ class BasketView extends StatelessWidget {
 
   Widget _row(String label, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      children: [
-        Text(
-          '$label:',
-          style: Ember.text(18, weight: FontWeight.w600, color: Ember.navy),
+    child: LabelValueRow(
+      label: Text(
+        '$label:',
+        style: Ember.text(
+          18,
+          weight: FontWeight.w600,
+          color: Ember.navy,
+          height: 1.2,
         ),
-        const Spacer(),
-        Text(value, style: Ember.text(20, color: const Color(0xFF212121))),
-      ],
+      ),
+      value: Text(value, style: Ember.text(20, color: const Color(0xFF212121))),
     ),
   );
 }
@@ -430,6 +439,7 @@ class _FulfillmentTile extends StatelessWidget {
                 ),
                 Text(
                   label,
+                  textAlign: TextAlign.center,
                   style: Ember.text(
                     16,
                     weight: FontWeight.w600,
@@ -439,6 +449,7 @@ class _FulfillmentTile extends StatelessWidget {
                 if (sub.isNotEmpty)
                   Text(
                     sub,
+                    textAlign: TextAlign.center,
                     style: Ember.text(
                       13,
                       color: active ? Colors.black : Colors.black45,

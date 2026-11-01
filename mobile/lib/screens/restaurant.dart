@@ -360,8 +360,8 @@ class _Hero extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              height: 61,
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              constraints: const BoxConstraints(minHeight: 61),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
               decoration: BoxDecoration(
                 color: r['open_now'] == true ? Ember.orange : Ember.navy,
                 borderRadius: const BorderRadius.horizontal(
@@ -373,12 +373,15 @@ class _Hero extends StatelessWidget {
                 children: [
                   const Icon(Icons.schedule, color: Colors.white, size: 28),
                   const SizedBox(width: 12),
-                  Text(
-                    openText(app, r),
-                    style: Ember.text(
-                      18,
-                      weight: FontWeight.w600,
-                      color: Colors.white,
+                  Flexible(
+                    child: Text(
+                      openText(app, r),
+                      style: Ember.text(
+                        18,
+                        weight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ],

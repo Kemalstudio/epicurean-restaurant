@@ -352,24 +352,42 @@ class RestaurantCard extends StatelessWidget {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                child: Row(
+                // Wrap, not Row: on narrow phones / large fonts the min-order
+                // label moves to a second line instead of overflowing.
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 4,
                   children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      color: Ember.orange,
-                      size: 18,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Ember.orange,
+                          size: 18,
+                        ),
+                        Text(
+                          numOf(r['rating']).toStringAsFixed(1),
+                          style: Ember.text(13, weight: FontWeight.w600),
+                        ),
+                      ],
                     ),
-                    Text(
-                      numOf(r['rating']).toStringAsFixed(1),
-                      style: Ember.text(13, weight: FontWeight.w600),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.schedule,
+                          size: 16,
+                          color: Colors.black54,
+                        ),
+                        Text(
+                          ' ${r['delivery_time']} ${app.t('min_short')}',
+                          style: Ember.text(13, color: Colors.black54),
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    const Icon(Icons.schedule, size: 16, color: Colors.black54),
-                    Text(
-                      ' ${r['delivery_time']} ${app.t('min_short')}',
-                      style: Ember.text(13, color: Colors.black54),
-                    ),
-                    const Spacer(),
                     Text(
                       app.t('min_order_short', {
                         'amount': app.price(numOf(r['min_order'])),

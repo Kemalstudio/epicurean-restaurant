@@ -10,6 +10,36 @@ import 'animated.dart';
 double numOf(dynamic v, [double f = 0]) =>
     v is num ? v.toDouble() : (double.tryParse('$v') ?? f);
 
+/// "Label ........ value" row that never overflows: the label wraps onto a
+/// second line and a too-wide value (e.g. a big price) scales down to fit.
+class LabelValueRow extends StatelessWidget {
+  final Widget label, value;
+  final double gap;
+  const LabelValueRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.gap = 12,
+  });
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) => Row(
+      children: [
+        Expanded(child: label),
+        SizedBox(width: gap),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: box.maxWidth * 0.62),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: value,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Network photo with gray placeholder (kit placeholder color).
 class NetImage extends StatelessWidget {
   final String? url;
@@ -171,13 +201,18 @@ class EmberHeader extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 14),
-                          Text(
-                            app.price(cart.total),
-                            style: Ember.text(
-                              16,
-                              weight: FontWeight.w600,
-                              color: Colors.white,
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                app.price(cart.total),
+                                style: Ember.text(
+                                  16,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -305,6 +340,7 @@ class DealCardSmall extends StatelessWidget {
               Text(
                 '${r['name']}',
                 maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Ember.text(14, weight: FontWeight.w600, height: 1.2),
               ),
             ],
@@ -338,10 +374,9 @@ class CuisineTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AspectRatio(
-                  aspectRatio: 238 / 203,
-                  child: NetImage(c['image_url']),
-                ),
+                // Photo takes whatever the grid cell leaves after the caption,
+                // so large system fonts shrink the photo instead of overflowing.
+                Expanded(child: NetImage(c['image_url'])),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
                   child: Column(
@@ -361,6 +396,8 @@ class CuisineTile extends StatelessWidget {
                         app.t('restaurants_count', {
                           'count': c['restaurant_count'],
                         }),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Ember.text(12, color: Colors.white),
                       ),
                     ],

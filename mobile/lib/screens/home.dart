@@ -164,7 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 22),
         SizedBox(
-          height: 220,
+          // 150 photo + 10 gap + caption (one 13pt line, two 14pt lines),
+          // grown with the system font scale.
+          height:
+              164 +
+              MediaQuery.textScalerOf(context).scale(13) * 1.5 +
+              MediaQuery.textScalerOf(context).scale(14) * 1.2 * 2,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: shown.length,

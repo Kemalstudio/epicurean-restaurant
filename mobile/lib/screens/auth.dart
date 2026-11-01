@@ -174,8 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
           height: 56,
         ),
         _gap(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(t('no_account'), style: Ember.text(14)),
             TextButton(
@@ -341,8 +342,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   setState(() => _otp = true);
                 }),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(t('have_account'), style: Ember.text(14)),
             TextButton(
