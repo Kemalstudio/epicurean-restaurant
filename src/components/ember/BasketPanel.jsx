@@ -100,7 +100,7 @@ export default function BasketPanel({ onCheckout, compact = false }) {
       {items.length === 0 ? (
         <div className="px-6 py-12 text-center">
           <LottieAnim name="empty_basket" size={150} />
-          <p className="text-[16px] font-semibold text-ember-navy">{t('cart_empty')}</p>
+          <p className="mt-5 text-[16px] font-semibold text-ember-navy">{t('cart_empty')}</p>
           <p className="mt-1 text-[14px] text-black/60">{t('cart_empty_desc')}</p>
           <Link to="/restaurants" onClick={onCheckout} className="btn-orange mt-6 h-[48px] text-[16px]">{t('browse_restaurants')}</Link>
         </div>

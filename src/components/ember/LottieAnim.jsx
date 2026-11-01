@@ -43,7 +43,7 @@ export function EmptyState({ anim, title, text, action, to, onAction, size = 190
   return (
     <div className="py-10 text-center">
       <LottieAnim name={anim} size={size} />
-      <h2 className="mt-2 text-[22px] font-bold text-ember-navy">{title}</h2>
+      <h2 className="mt-5 text-[22px] font-bold text-ember-navy">{title}</h2>
       {text && <p className="mx-auto mt-1 max-w-[460px] text-[15px] text-black/60">{text}</p>}
       {action && to && <Link to={to} className="btn-orange mt-6 h-[50px] text-[16px]">{action}</Link>}
       {action && onAction && <button type="button" onClick={onAction} className="btn-orange mt-6 h-[50px] text-[16px]">{action}</button>}

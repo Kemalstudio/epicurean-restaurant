@@ -80,7 +80,7 @@ export default function Checkout() {
       <div className="ember-container flex min-h-[50vh] items-center justify-center py-16">
         <div className="text-center">
           <LottieAnim name="empty_basket" size={170} />
-          <h1 className="text-[28px] font-bold">{t('cart_empty')}</h1>
+          <h1 className="mt-5 text-[28px] font-bold">{t('cart_empty')}</h1>
           <p className="mt-2 text-black/60">{t('cart_empty_desc')}</p>
           <Link to="/restaurants" className="btn-orange mt-6 h-[52px] text-[16px]">{t('browse_restaurants')}</Link>
         </div>
