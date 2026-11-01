@@ -162,7 +162,7 @@ export default function ProductCard({ product, restaurant, isFavourite, onToggle
           {product.discount_percent > 0 && <p className="mt-2 inline-block rounded-[4px] bg-ember-navy px-2 py-0.5 text-[13px] font-bold text-white">−{product.discount_percent}%</p>}
         </div>
         <div className="relative shrink-0">
-          <Photo src={product.image_url} alt={product.name} className="h-[117px] w-[117px] rounded-full sm:h-[191px] sm:w-[191px]" />
+          <Photo src={product.image_url} alt={product.name} className="h-[117px] w-[117px] rounded-full sm:h-[150px] sm:w-[150px] 2xl:h-[191px] 2xl:w-[191px]" />
           {onToggleFavourite && (
             <button type="button" onClick={() => onToggleFavourite(product.id)} aria-pressed={!!isFavourite}
               aria-label={isFavourite ? t('remove_from_wishlist') : t('add_to_wishlist')}

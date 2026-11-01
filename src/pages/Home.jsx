@@ -130,7 +130,7 @@ function Deals({ deals, cuisines, loading }) {
         <label className="relative flex h-[38px] shrink-0 items-center rounded-pill border border-ember-navy pl-8 pr-3 lg:hidden">
           <span className="sr-only">{t('filter_by_cuisine')}</span>
           <ChevronDown className="pointer-events-none absolute left-2 h-[18px] w-[18px] rounded-full bg-ember-navy p-0.5 text-white" aria-hidden="true" />
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-[120px] appearance-none bg-transparent text-[10px] outline-none">
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="h-full max-w-[140px] cursor-pointer appearance-none bg-transparent pr-1 text-[12px] outline-none">
             <option value="all">{t('filter_all')}</option>
             {tabs.map(tab => <option key={tab.slug} value={tab.slug}>{tab.name}</option>)}
           </select>
@@ -170,7 +170,7 @@ function PopularRestaurants({ restaurants, loading }) {
     <section className="mt-10 lg:mt-[56px]" aria-labelledby="pop-title">
       <div className="flex items-end justify-between">
         <h2 id="pop-title" className="text-[16px] font-bold lg:pl-[21px] lg:text-[32px]">{t('popular_restaurants')}</h2>
-        <Link to="/restaurants" className="text-[14px] font-semibold text-ember-orange underline underline-offset-2">{t('see_all')}</Link>
+        <Link to="/restaurants" className="inline-block py-2 text-[14px] font-semibold text-ember-orange underline underline-offset-2">{t('see_all')}</Link>
       </div>
       <div className="scrollbar-hide -mx-4 mt-6 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:mt-[51px] lg:grid lg:grid-cols-6 lg:gap-5 lg:overflow-visible lg:px-0">
         {loading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-[238/266] w-[122px] shrink-0 rounded-card lg:w-auto" />)
@@ -225,7 +225,7 @@ function AppPromo() {
 function JoinCard({ image, tab, kicker, title, to }) {
   const { t } = useLanguage();
   return (
-    <div className="relative aspect-[754/425] min-h-[220px] overflow-hidden rounded-card">
+    <div className="relative h-[240px] w-full overflow-hidden rounded-card sm:h-auto sm:aspect-[754/425]">
       <Photo src={image} className="absolute inset-0 h-full w-full" />
       <span className="deal-overlay absolute inset-0" aria-hidden="true" />
       <span className="absolute left-[9%] top-0 rounded-b-card bg-white px-5 py-2.5 text-[13px] font-bold text-ember-navy md:px-7 md:py-4 md:text-[18px]">{tab}</span>

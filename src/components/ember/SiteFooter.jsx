@@ -35,7 +35,7 @@ function Subscribe() {
           placeholder="youremail@gmail.com" autoComplete="email"
           className="min-w-0 flex-1 rounded-pill bg-transparent pl-7 text-[15px] outline-none placeholder:text-black/60"
         />
-        <button type="submit" disabled={sending} className="btn-orange h-[59px] w-[171px] shrink-0 px-0">
+        <button type="submit" disabled={sending} className="btn-orange h-[59px] w-[130px] shrink-0 px-0 sm:w-[171px]">
           {t('subscribe')}
         </button>
       </div>
@@ -78,10 +78,10 @@ export default function SiteFooter() {
   return (
     <footer className="mt-16 md:mt-[45px]">
       <div className="bg-[#D9D9D9]/60">
-        <div className="ember-container grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1fr_1.4fr_0.8fr_0.9fr] lg:gap-8 lg:py-[81px]">
+        <div className="ember-container grid grid-cols-[minmax(0,1fr)] gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1fr_1.4fr_0.8fr_0.9fr] lg:gap-8 lg:py-[81px]">
           <div>
             <Logo className="h-[58px] w-auto" />
-            <div className="mt-6 flex gap-1.5" title={t('app_coming_soon')}>
+            <div className="mt-6 flex flex-wrap gap-1.5" title={t('app_coming_soon')}>
               {[['App Store', t('download_on')], ['Google Play', t('get_it_on')]].map(([big, small]) => (
                 <span key={big} aria-disabled="true" className="inline-flex h-[53px] items-center rounded-[8px] border border-ember-gray-dark bg-black px-3 text-white">
                   <span className="leading-none"><span className="block text-[9px] uppercase">{small}</span><span className="block text-[17px] font-semibold">{big}</span></span>
@@ -107,15 +107,15 @@ export default function SiteFooter() {
 
           <nav aria-label={t('legal_pages')}>
             <h2 className="mb-4 text-[18px] font-bold text-ember-navy">{t('legal_pages')}</h2>
-            <ul className="space-y-[18px] text-[15px]">
-              {legal.map(l => <li key={l.key}><Link to={l.to} className="underline underline-offset-2 hover:text-ember-orange">{t(l.key)}</Link></li>)}
+            <ul className="space-y-2 text-[15px]">
+              {legal.map(l => <li key={l.key}><Link to={l.to} className="inline-block py-1.5 underline underline-offset-2 hover:text-ember-orange">{t(l.key)}</Link></li>)}
             </ul>
           </nav>
 
           <nav aria-label={t('important_links')}>
             <h2 className="mb-4 text-[18px] font-bold text-ember-navy">{t('important_links')}</h2>
-            <ul className="space-y-[18px] text-[15px]">
-              {important.map(l => <li key={l.key}><Link to={l.to} className="underline underline-offset-2 hover:text-ember-orange">{t(l.key)}</Link></li>)}
+            <ul className="space-y-2 text-[15px]">
+              {important.map(l => <li key={l.key}><Link to={l.to} className="inline-block py-1.5 underline underline-offset-2 hover:text-ember-orange">{t(l.key)}</Link></li>)}
             </ul>
           </nav>
         </div>

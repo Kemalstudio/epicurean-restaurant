@@ -63,7 +63,7 @@ function AccountButton() {
 
   if (!isAuthenticated) {
     return (
-      <Link to="/login" className="btn-navy h-[61px] gap-3 px-6 text-[18px] font-semibold">
+      <Link to="/login" className="btn-navy h-[50px] shrink-0 gap-2.5 px-4 text-[15px] font-semibold xl:h-[56px] xl:px-5 xl:text-[16px] 2xl:h-[61px] 2xl:gap-3 2xl:px-6 2xl:text-[18px]">
         <span className="flex h-[27px] w-[27px] items-center justify-center rounded-full bg-ember-orange" aria-hidden="true">
           <UserRound className="h-4 w-4 text-white" />
         </span>
@@ -73,7 +73,7 @@ function AccountButton() {
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="btn-navy h-[61px] max-w-[260px] gap-3 px-6 text-[18px] font-semibold">
+      <DropdownMenuTrigger className="btn-navy h-[50px] max-w-[200px] shrink-0 gap-2.5 px-4 text-[15px] font-semibold xl:h-[56px] xl:max-w-[230px] xl:text-[16px] 2xl:h-[61px] 2xl:max-w-[260px] 2xl:gap-3 2xl:px-6 2xl:text-[18px]">
         <span className="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full bg-ember-orange text-[13px] font-bold" aria-hidden="true">
           {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
         </span>
@@ -106,14 +106,14 @@ function TopBar() {
   return (
     <div className="ember-container hidden lg:block">
       <div className="flex h-[70px] items-stretch overflow-hidden rounded-b-card border border-t-0 border-black bg-ember-light">
-        <p className="flex min-w-0 flex-1 items-center gap-2.5 pl-9 text-[15px] font-medium">
+        <p className="hidden min-w-0 flex-1 items-center gap-2.5 pl-9 text-[15px] font-medium xl:flex">
           <span aria-hidden="true" className="text-[22px]">🌟</span>
           <span className="truncate">
             {t('promo_banner')}{' '}
             <Link to="/offers" className="text-ember-orange underline underline-offset-2">{t('promo_banner_code', { code: 'WELCOME' })}</Link>
           </span>
         </p>
-        <div className="flex items-center gap-3 px-6 text-[15px] font-medium text-ember-navy">
+        <div className="flex min-w-0 flex-1 items-center gap-3 px-6 text-[15px] font-medium text-ember-navy xl:flex-none">
           <MapPin className="h-6 w-6 shrink-0" aria-hidden="true" />
           <span className="max-w-[240px] truncate">{address || t('no_address')}</span>
           <button type="button" onClick={openPopup} className="whitespace-nowrap text-[14px] text-ember-orange underline underline-offset-2">
@@ -126,13 +126,13 @@ function TopBar() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="flex w-[378px] shrink-0 items-stretch rounded-b-card bg-ember-green text-[16px] font-semibold text-white"
+          className="flex w-[320px] shrink-0 items-stretch rounded-b-card bg-ember-green text-[15px] font-semibold text-white 2xl:w-[378px] 2xl:text-[16px]"
           aria-label={t('open_basket')}
         >
-          <span className="flex w-[88px] items-center justify-center border-r border-white"><ShoppingBasket className="h-9 w-9" aria-hidden="true" /></span>
-          <span className="flex w-[112px] items-center justify-center border-r border-white">{t('items_short', { count: itemCount })}</span>
-          <span className="flex w-[116px] items-center justify-center border-r border-white">{formatPrice(total)}</span>
-          <span className="flex flex-1 items-center justify-center">
+          <span className="flex w-[72px] items-center justify-center border-r border-white 2xl:w-[88px]"><ShoppingBasket className="h-9 w-9" aria-hidden="true" /></span>
+          <span className="flex flex-1 items-center justify-center border-r border-white">{t('items_short', { count: itemCount })}</span>
+          <span className="flex flex-1 items-center justify-center whitespace-nowrap border-r border-white px-2">{formatPrice(total)}</span>
+          <span className="flex w-[62px] shrink-0 items-center justify-center">
             <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-white"><ChevronDown className="h-6 w-6 text-ember-green" aria-hidden="true" /></span>
           </span>
         </button>
@@ -203,12 +203,12 @@ export default function SiteHeader() {
       <TopBar />
 
       {/* Desktop navigation */}
-      <div className="ember-container hidden items-center justify-between gap-6 py-[38px] lg:flex">
-        <Logo />
-        <nav className="flex items-center gap-1 xl:gap-4" aria-label={t('menu')}>
+      <div className="ember-container hidden items-center justify-between gap-4 py-7 lg:flex 2xl:gap-6 2xl:py-[38px]">
+        <Logo className="h-[38px] w-auto xl:h-[44px] 2xl:h-[53px]" />
+        <nav className="flex min-w-0 items-center gap-0.5 xl:gap-1 2xl:gap-4" aria-label={t('menu')}>
           {NAV_ITEMS.map(item => (
             <NavLink key={item.to} to={item.to} end={item.end}
-              className={({ isActive }) => `flex h-[45px] items-center whitespace-nowrap rounded-pill px-5 text-[17px] font-semibold transition-colors xl:px-7 xl:text-[18px] ${isActive ? 'bg-ember-orange text-white' : 'text-black hover:text-ember-orange'}`}>
+              className={({ isActive }) => `flex h-[42px] items-center whitespace-nowrap rounded-pill px-3 text-[15px] font-semibold transition-colors xl:px-4 xl:text-[16px] 2xl:h-[45px] 2xl:px-7 2xl:text-[18px] ${isActive ? 'bg-ember-orange text-white' : 'text-black hover:text-ember-orange'}`}>
               {t(item.key)}
             </NavLink>
           ))}
@@ -225,11 +225,11 @@ export default function SiteHeader() {
           </button>
         </div>
         <div className="grid h-[77px] grid-cols-2">
-          <Link to={isAuthenticated ? '/orders' : '/login'} className="flex items-center gap-3 bg-ember-orange px-6 text-[14px] font-semibold text-black">
+          <Link to={isAuthenticated ? '/orders' : '/login'} className="flex min-w-0 items-center gap-2.5 bg-ember-orange px-4 text-[14px] font-semibold text-black sm:gap-3 sm:px-6">
             <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-white text-[16px] font-bold text-ember-orange" aria-hidden="true">
               {isAuthenticated ? (user?.name || user?.email || '?').charAt(0).toUpperCase() : <UserRound className="h-5 w-5" />}
             </span>
-            <span className="truncate">{isAuthenticated ? (user?.name || user?.email) : t('login_signup')}</span>
+            <span className="truncate">{isAuthenticated ? (user?.name || user?.email) : t('log_in')}</span>
           </Link>
           <button type="button" onClick={() => setIsOpen(true)} className="flex items-center justify-center gap-4 bg-ember-green text-[16px] font-semibold text-white" aria-label={t('open_basket')}>
             <ShoppingBasket className="h-[45px] w-[45px]" aria-hidden="true" />

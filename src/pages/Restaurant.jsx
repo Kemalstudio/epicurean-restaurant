@@ -65,21 +65,21 @@ function Hero({ r }) {
       <div className="relative hidden h-[477px] rounded-card lg:block">
         <Photo src={r.cover_url} className="absolute inset-0 h-full w-full rounded-card" />
         <div className="absolute inset-0 rounded-card bg-[#E2E2E2]/90" aria-hidden="true" />
-        <div className="relative flex h-full items-center justify-between gap-10 pl-[57px] pr-[62px]">
-          <div className="max-w-[660px]">
+        <div className="relative flex h-full items-center justify-between gap-8 pl-10 pr-10 2xl:gap-10 2xl:pl-[57px] 2xl:pr-[62px]">
+          <div className="min-w-0 max-w-[660px]">
             {r.tagline && <p className="text-[20px] text-ember-navy">{r.tagline}</p>}
-            <h1 id="restaurant-name" className="mt-2 text-[44px] font-bold leading-tight text-ember-navy xl:text-[54px]">{r.name}</h1>
+            <h1 id="restaurant-name" className="mt-2 text-[36px] font-bold leading-tight text-ember-navy xl:text-[44px] 2xl:text-[54px]">{r.name}</h1>
             <div className="mt-8 flex flex-wrap gap-4">
               {badges.map(b => (
-                <span key={b.text} className="flex h-[63px] items-center gap-4 rounded-pill border border-white bg-ember-navy px-7 text-[18px] font-semibold text-white">
+                <span key={b.text} className="flex h-[54px] items-center gap-3 whitespace-nowrap rounded-pill border border-white bg-ember-navy px-5 text-[15px] font-semibold text-white xl:text-[16px] 2xl:h-[63px] 2xl:gap-4 2xl:px-7 2xl:text-[18px]">
                   <b.icon className="h-[30px] w-[30px]" aria-hidden="true" />{b.text}
                 </span>
               ))}
             </div>
           </div>
-          <div className="relative h-[361px] w-[581px] shrink-0">
+          <div className="relative aspect-[581/361] w-[38%] max-w-[581px] shrink-0 xl:w-[42%]">
             <Photo src={r.hero_image_url || r.cover_url} alt={r.name} className="h-full w-full rounded-card" />
-            <RatingBox rating={r.rating} count={r.review_count} className="absolute -left-14 top-[211px] h-[158px] w-[136px]" />
+            <RatingBox rating={r.rating} count={r.review_count} className="absolute -left-10 bottom-[-20px] h-[130px] w-[112px] 2xl:-left-14 2xl:bottom-[-8px] 2xl:h-[158px] 2xl:w-[136px]" />
           </div>
         </div>
         <OpenBadge r={r} className="absolute -bottom-[30px] left-0 h-[61px] rounded-r-card rounded-bl-card px-14 text-[18px]" />
@@ -91,7 +91,7 @@ function Hero({ r }) {
           <Photo src={r.hero_image_url || r.cover_url} alt={r.name} className="aspect-[228/142] w-full rounded-card" />
           <RatingBox compact rating={r.rating} count={r.review_count} className="absolute bottom-[-8px] left-[30px] h-[83px] w-[54px]" />
         </div>
-        <OpenBadge r={r} className="mr-[62px] mt-[34px] h-[61px] rounded-r-card px-[65px] text-[18px]" />
+        <OpenBadge r={r} className="mt-[34px] inline-flex h-[61px] whitespace-nowrap rounded-r-card px-8 text-[18px]" />
         <div className="px-4 pb-8 pt-12 text-center">
           {r.tagline && <p className="text-[13px] text-black">{r.tagline}</p>}
           <h1 className="text-[28px] font-bold leading-tight text-ember-navy">{r.name}</h1>
@@ -259,12 +259,12 @@ function MenuNav({ sections, active, onSelect }) {
   const { t } = useLanguage();
   return (
     <nav className="overflow-hidden rounded-card border border-[#BCBCBC] bg-[#FBFBFB]" aria-label={t('menu')}>
-      <h2 className="flex items-center gap-5 px-[34px] pb-8 pt-[46px] text-[32px] font-semibold"><UtensilsCrossed className="h-[45px] w-[45px]" aria-hidden="true" />{t('menu')}</h2>
+      <h2 className="flex items-center gap-4 px-6 pb-6 pt-8 text-[28px] 2xl:gap-5 2xl:px-[34px] 2xl:pb-8 2xl:pt-[46px] 2xl:text-[32px] font-semibold"><UtensilsCrossed className="h-[45px] w-[45px]" aria-hidden="true" />{t('menu')}</h2>
       <ul className="pb-8">
         {[{ id: 'all', name: t('all_dishes') }, ...sections].map(s => (
           <li key={s.id}>
             <button type="button" onClick={() => onSelect(s.id)} aria-current={active === s.id ? 'true' : undefined}
-              className={`block w-full px-[34px] py-[19px] text-left text-[20px] font-bold xl:text-[22px] ${active === s.id ? 'bg-ember-navy text-white' : 'text-[#282828] hover:text-ember-orange'}`}>
+              className={`block w-full px-6 py-4 text-left text-[18px] font-bold 2xl:px-[34px] 2xl:py-[19px] 2xl:text-[22px] ${active === s.id ? 'bg-ember-navy text-white' : 'text-[#282828] hover:text-ember-orange'}`}>
               {s.name}
             </button>
           </li>
@@ -344,7 +344,7 @@ export default function RestaurantPage() {
         </label>
       </div>
 
-      <div className="mt-8 grid gap-5 lg:mt-[39px] lg:grid-cols-[minmax(0,367px)_minmax(0,1fr)_minmax(0,367px)] xl:gap-5">
+      <div className="mt-8 grid gap-5 lg:mt-[39px] lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,340px)] 2xl:grid-cols-[minmax(0,367px)_minmax(0,1fr)_minmax(0,367px)]">
         {/* Left: menu */}
         <aside className="space-y-5">
           <div className="hidden lg:block"><MenuNav sections={r.sections} active={section} onSelect={setSection} /></div>
@@ -396,7 +396,7 @@ export default function RestaurantPage() {
         </div>
 
         {/* Right: basket */}
-        <aside className="hidden space-y-5 lg:block">
+        <aside className="hidden space-y-5 xl:block">
           <div className="flex h-[125px] items-center justify-center gap-5 rounded-[8px] bg-ember-orange text-[18px] font-semibold text-white">
             <Clock className="h-[58px] w-[58px]" aria-hidden="true" />
             {r.open_now ? (r.closes_at ? t('open_until', { time: r.closes_at }) : t('open_now')) : (r.opens_at ? t('opens_at', { time: r.opens_at }) : t('closed_now'))}

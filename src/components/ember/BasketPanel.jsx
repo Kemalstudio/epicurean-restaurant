@@ -82,9 +82,9 @@ export default function BasketPanel({ onCheckout, compact = false }) {
 
   return (
     <section className="overflow-hidden rounded-card border border-black bg-[#F9F9F9]" aria-label={t('my_basket')}>
-      <div className="flex h-[117px] items-center gap-8 border-b border-white bg-ember-green px-12 text-white">
-        <BasketIcon />
-        <h2 className="text-[28px] font-semibold md:text-[32px]">{t('my_basket')}</h2>
+      <div className="flex h-[100px] items-center gap-5 border-b border-white bg-ember-green px-7 text-white 2xl:h-[117px] 2xl:gap-8 2xl:px-12">
+        <BasketIcon className="h-[48px] w-[48px] shrink-0 2xl:h-[58px] 2xl:w-[58px]" />
+        <h2 className="whitespace-nowrap text-[26px] font-semibold 2xl:text-[32px]">{t('my_basket')}</h2>
       </div>
 
       {restaurant && items.length > 0 && (
@@ -142,7 +142,7 @@ export default function BasketPanel({ onCheckout, compact = false }) {
           <div className="space-y-3.5 border-b border-black px-3 py-5">
             <div className="flex h-[70px] items-center justify-between rounded-[8px] border border-black bg-ember-orange/80 px-8 text-white">
               <span className="text-[20px] font-semibold">{t('total_to_pay')}</span>
-              <span className="text-[28px] font-semibold md:text-[32px]">{formatPrice(total)}</span>
+              <span className="text-[24px] font-semibold 2xl:text-[32px]">{formatPrice(total)}</span>
             </div>
             <PromoField key={promoCode || 'none'} />
           </div>
