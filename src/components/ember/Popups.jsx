@@ -52,24 +52,24 @@ export function DeliveryPopup() {
           <img src="/img/1526367790999-0150786686a2-500.webp" alt="" className="h-full w-full object-cover" />
           <span className="absolute right-0 top-0 h-full w-[6px] bg-ember-orange" aria-hidden="true" />
         </div>
-        <form onSubmit={submit} className="relative flex-1 px-8 py-12 sm:px-8">
-          <h2 className="text-[26px] font-bold leading-[1.15] text-ember-navy">
+        <form onSubmit={submit} className="relative min-w-0 flex-1 px-6 py-10 sm:px-8 sm:py-12">
+          <h2 className="text-[24px] font-bold leading-[1.15] text-ember-navy sm:text-[26px]">
             {t('enter_address_title_1')}<br />
             <span className={`underline underline-offset-4 ${error ? 'text-ember-red' : ''}`}>{t('enter_address_title_2')}</span>
           </h2>
           <p className="mt-6 text-[14px] text-black">{t('enter_address_desc')}</p>
-          <div className="mt-7 flex h-[50px] sm:-mr-14">
+          <div className="mt-7 flex h-[50px]">
             <label htmlFor="popup-address" className="sr-only">{t('delivery_address')}</label>
             <input id="popup-address" value={value} onChange={(e) => { setValue(e.target.value); setError(false); }} autoFocus
               placeholder={t('address_placeholder')} autoComplete="street-address"
-              className="min-w-0 flex-1 rounded-l-pill bg-[#EFEFEF] pl-7 text-[15px] outline-none placeholder:text-black/60" />
-            <button type="submit" className={`w-[120px] shrink-0 rounded-r-pill text-[20px] font-bold text-white ${error ? 'bg-ember-navy' : 'bg-ember-orange'}`}>{t('find')}</button>
+              className="min-w-0 flex-1 rounded-l-pill bg-[#EFEFEF] pl-5 text-[15px] outline-none placeholder:text-black/60 sm:pl-7" />
+            <button type="submit" className={`shrink-0 whitespace-nowrap rounded-r-pill px-5 text-[17px] font-bold text-white sm:w-[120px] sm:px-0 sm:text-[20px] ${error ? 'bg-ember-navy' : 'bg-ember-orange'}`}>{t('find')}</button>
           </div>
           {error && <p className="mt-4 text-[14px] font-bold text-ember-red" role="alert">{t('address_too_short')}</p>}
           <div className="mt-6 flex items-center gap-3 text-[14px] font-semibold">
             <span className="h-px flex-1 bg-ember-orange" /><span>{t('or_word')}</span><span className="h-px flex-1 bg-ember-orange" />
           </div>
-          <button type="button" onClick={() => { setFulfillment('collection'); closePopup(); }} className="mx-auto mt-2 block text-[13px] font-semibold underline underline-offset-2">
+          <button type="button" onClick={() => { setFulfillment('collection'); closePopup(); }} className="mx-auto mt-1 block min-h-[44px] px-3 text-[13px] font-semibold underline underline-offset-2">
             {t('i_will_collect')}
           </button>
           <MapPinned className="absolute bottom-6 left-6 h-16 w-16 text-black/10" aria-hidden="true" />
