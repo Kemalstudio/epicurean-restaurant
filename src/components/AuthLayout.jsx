@@ -16,12 +16,12 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
           </Link>
         </div>
         <div className="overflow-hidden rounded-card border border-black bg-[#F9F9F9]">
-          <div className="flex items-center gap-4 bg-ember-navy px-8 py-7 text-white">
+          <div className="flex items-center gap-4 bg-ember-navy px-5 py-6 text-white sm:px-8 sm:py-7">
             <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-ember-orange" aria-hidden="true">
               <Icon className="h-6 w-6 text-white" />
             </span>
-            <div>
-              <h1 className="text-[24px] font-bold leading-tight">{title}</h1>
+            <div className="min-w-0">
+              <h1 className="break-words text-[22px] font-bold leading-tight sm:text-[24px]">{title}</h1>
               {subtitle && <p className="mt-1 text-[14px] text-white/75">{subtitle}</p>}
             </div>
           </div>
