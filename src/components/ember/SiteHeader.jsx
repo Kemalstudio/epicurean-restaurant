@@ -108,14 +108,13 @@ function TopBar() {
       <div className="flex h-[70px] items-stretch overflow-hidden rounded-b-card border border-t-0 border-black bg-ember-light">
         <p className="hidden min-w-0 flex-1 items-center gap-2.5 pl-9 text-[15px] font-medium xl:flex">
           <span aria-hidden="true" className="text-[22px]">🌟</span>
-          <span className="truncate">
-            {t('promo_banner')}{' '}
-            <Link to="/offers" className="text-ember-orange underline underline-offset-2">{t('promo_banner_code', { code: 'WELCOME' })}</Link>
-          </span>
+          {/* Only the description may be shortened — the promo code itself always stays visible */}
+          <span className="min-w-0 truncate">{t('promo_banner')}</span>
+          <Link to="/offers" className="shrink-0 whitespace-nowrap text-ember-orange underline underline-offset-2">{t('promo_banner_code', { code: 'WELCOME' })}</Link>
         </p>
         <div className="flex min-w-0 flex-1 items-center gap-3 px-6 text-[15px] font-medium text-ember-navy xl:flex-none">
           <MapPin className="h-6 w-6 shrink-0" aria-hidden="true" />
-          <span className="max-w-[240px] truncate">{address || t('no_address')}</span>
+          <span className="max-w-[240px] truncate xl:max-w-[150px] 2xl:max-w-[240px]">{address || t('no_address')}</span>
           <button type="button" onClick={openPopup} className="whitespace-nowrap text-[14px] text-ember-orange underline underline-offset-2">
             {t('change_location')}
           </button>
@@ -154,7 +153,7 @@ function MobileMenu({ open, onClose }) {
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[90] bg-ember-navy/95 lg:hidden" role="dialog" aria-modal="true" aria-label={t('menu')}>
+    <div className="fixed inset-0 z-[90] overflow-y-auto bg-ember-navy lg:hidden" role="dialog" aria-modal="true" aria-label={t('menu')}>
       <div className="flex h-[91px] items-center justify-between border-b border-white/20 px-4">
         <Logo variant="white" className="h-[38px] w-auto" />
         <button type="button" onClick={onClose} className="flex h-[65px] w-[65px] items-center justify-center text-white" aria-label={t('close')}>
@@ -183,7 +182,7 @@ function MobileMenu({ open, onClose }) {
         ) : (
           <Link to="/login" onClick={onClose} className="btn-orange mx-2 h-[52px]">{t('login_signup')}</Link>
         )}
-        <div className="mt-6 px-6"><LanguageSwitcher className="text-white" /></div>
+        <div className="mt-6 px-6"><LanguageSwitcher className="min-h-[44px] pr-2 text-[16px] text-white" /></div>
       </nav>
     </div>
   );
@@ -231,12 +230,12 @@ export default function SiteHeader() {
             </span>
             <span className="truncate">{isAuthenticated ? (user?.name || user?.email) : t('log_in')}</span>
           </Link>
-          <button type="button" onClick={() => setIsOpen(true)} className="flex items-center justify-center gap-4 bg-ember-green text-[16px] font-semibold text-white" aria-label={t('open_basket')}>
+          <button type="button" onClick={() => setIsOpen(true)} className="flex min-w-0 items-center justify-center gap-2 bg-ember-green px-2 text-[16px] font-semibold text-white sm:gap-4" aria-label={t('open_basket')}>
             <ShoppingBasket className="h-[45px] w-[45px]" aria-hidden="true" />
             {formatPrice(total)}
           </button>
         </div>
-        <button type="button" onClick={openPopup} className="ml-auto flex max-w-full items-center justify-end gap-2 px-4 pt-3 text-[14px]">
+        <button type="button" onClick={openPopup} className="ml-auto flex min-h-[44px] max-w-full items-center justify-end gap-2 px-4 pt-1 text-[14px]">
           <MapPin className="h-6 w-6 shrink-0" aria-hidden="true" />
           <span className="truncate">{address || t('no_address')}</span>
         </button>
