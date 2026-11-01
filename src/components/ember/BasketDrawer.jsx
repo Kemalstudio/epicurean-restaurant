@@ -27,7 +27,7 @@ export default function BasketDrawer() {
         <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true" aria-label={t('my_basket')}>
           <motion.div className="absolute inset-0 bg-black/60" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} />
           <motion.div
-            className="absolute bottom-0 right-0 top-0 w-full max-w-[400px] overflow-y-auto bg-white"
+            className="absolute bottom-0 right-0 top-0 w-full max-w-[400px] overflow-y-auto bg-[#F9F9F9]"
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           >
             <button type="button" onClick={() => setIsOpen(false)} className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ember-navy shadow-soft" aria-label={t('close')}>

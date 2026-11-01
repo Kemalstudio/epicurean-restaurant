@@ -81,7 +81,9 @@ export default function BasketPanel({ onCheckout, compact = false }) {
   const blocked = items.length === 0 || (fulfillment === 'delivery' && missingForMin > 0);
 
   return (
-    <section className="overflow-hidden rounded-card border border-black bg-[#F9F9F9]" aria-label={t('my_basket')}>
+    // compact = inside the slide-out drawer: full-height panel, no card corners/border
+    // (rounded corners showed the drawer's white background in the top corners)
+    <section className={compact ? 'min-h-full bg-[#F9F9F9]' : 'overflow-hidden rounded-card border border-black bg-[#F9F9F9]'} aria-label={t('my_basket')}>
       <div className="flex h-[100px] items-center gap-5 border-b border-white bg-ember-green px-7 text-white 2xl:h-[117px] 2xl:gap-8 2xl:px-12">
         <BasketIcon className="h-[48px] w-[48px] shrink-0 2xl:h-[58px] 2xl:w-[58px]" />
         <h2 className="whitespace-nowrap text-[26px] font-semibold 2xl:text-[32px]">{t('my_basket')}</h2>
