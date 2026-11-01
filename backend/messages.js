@@ -31,6 +31,11 @@ const EXACT = {
   'Rating must be 1–5': { ru: 'Оценка должна быть от 1 до 5', tk: 'Baha 1-den 5-e çenli bolmaly' },
   'Please write a comment': { ru: 'Напишите отзыв', tk: 'Pikiriňizi ýazyň' },
   'Already in wishlist': { ru: 'Уже в избранном', tk: 'Eýýäm halanlarda' },
+  'Restaurant not found': { ru: 'Ресторан не найден', tk: 'Restoran tapylmady' },
+  'All items must be from one restaurant': { ru: 'В одном заказе могут быть блюда только из одного ресторана', tk: 'Bir sargytda diňe bir restoranyň naharlary bolup biler' },
+  'Please fill in all required fields': { ru: 'Заполните все обязательные поля', tk: 'Ähli hökmany meýdançalary dolduryň' },
+  'Application already sent': { ru: 'Заявка уже отправлена', tk: 'Arza eýýäm iberildi' },
+  'Already subscribed': { ru: 'Вы уже подписаны', tk: 'Siz eýýäm ýazyldyňyz' },
 };
 
 const PATTERNS = [
@@ -38,6 +43,11 @@ const PATTERNS = [
     re: /^Minimum order for this code is (.+)$/,
     ru: (m) => `Минимальная сумма заказа для этого кода — ${m[1]} TMT`,
     tk: (m) => `Bu kod üçin iň az sargyt möçberi — ${m[1]} TMT`,
+  },
+  {
+    re: /^Minimum order is (.+)$/,
+    ru: (m) => `Минимальная сумма заказа в этом ресторане — ${m[1]} TMT`,
+    tk: (m) => `Bu restoranda iň az sargyt möçberi — ${m[1]} TMT`,
   },
   {
     re: /^"(.+)" is not available right now$/,

@@ -21,6 +21,11 @@ sqlite.exec(`
     PRIMARY KEY (entity, id)
   );
 
+  CREATE TABLE IF NOT EXISTS meta (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
     user_id    TEXT NOT NULL,
@@ -35,6 +40,10 @@ const stmt = {
   remove: sqlite.prepare('DELETE FROM records WHERE entity = ? AND id = ?'),
   count:  sqlite.prepare('SELECT COUNT(*) AS n FROM records WHERE entity = ?'),
   findBy: sqlite.prepare("SELECT data FROM records WHERE entity = ? AND json_extract(data, '$.' || ?) = ? LIMIT 1"),
+
+  metaGet: sqlite.prepare('SELECT value FROM meta WHERE key = ?'),
+  metaSet: sqlite.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'),
+  wipe:    sqlite.prepare('DELETE FROM records WHERE entity = ?'),
 
   sessionInsert: sqlite.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)'),
   sessionGet:    sqlite.prepare('SELECT user_id, expires_at FROM sessions WHERE token_hash = ?'),
@@ -52,6 +61,9 @@ const store = {
   count: (entity) => stmt.count.get(entity).n,
   save: (entity, item) => { stmt.upsert.run(entity, String(item.id), JSON.stringify(item)); return item; },
   remove: (entity, id) => stmt.remove.run(entity, String(id)).changes > 0,
+  wipe: (entity) => stmt.wipe.run(entity),
+  getMeta: (key) => stmt.metaGet.get(key)?.value ?? null,
+  setMeta: (key, value) => stmt.metaSet.run(key, String(value)),
 
   // Runs fn atomically; rolls back on any thrown error
   transaction: (fn) => {

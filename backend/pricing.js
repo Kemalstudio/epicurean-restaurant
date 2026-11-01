@@ -1,4 +1,4 @@
-// Server-side order pricing. The client only says WHAT it wants (product, size,
+// Server-side order pricing. The client only says WHAT it wants (restaurant, products, size,
 // extra/removed ingredients, quantity, promo code); every price is taken from the database.
 
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -8,14 +8,16 @@ const num = (value, fallback) => {
   return value !== undefined && value !== '' && Number.isFinite(n) ? n : fallback;
 };
 
+// Platform defaults; each restaurant can override delivery_fee / free_delivery_from / min_order
 const PRICING = {
-  delivery_fee: num(process.env.DELIVERY_FEE, 4.99),
-  free_delivery_from: num(process.env.FREE_DELIVERY_FROM, 50),
-  tax_rate: num(process.env.TAX_RATE, 0.08),
+  delivery_fee: num(process.env.DELIVERY_FEE, 10),
+  free_delivery_from: num(process.env.FREE_DELIVERY_FROM, 150),
+  tax_rate: num(process.env.TAX_RATE, 0),
 };
 
 const MAX_LINES = 50;
 const MAX_QTY = 99;
+const FULFILLMENT = ['delivery', 'collection'];
 
 class PricingError extends Error {
   constructor(message) { super(message); this.status = 400; }
@@ -27,12 +29,22 @@ const pickLang = (value, lang) =>
 const asIdList = (value) =>
   Array.isArray(value) ? [...new Set(value.filter(v => typeof v === 'string'))] : [];
 
-/** Validates a promo code against the subtotal. Returns the promo record or throws. */
-function resolvePromo(store, code, subtotal) {
+/** Delivery terms of a restaurant, falling back to platform defaults. */
+function restaurantTerms(r) {
+  return {
+    delivery_fee: num(r?.delivery_fee, PRICING.delivery_fee),
+    free_delivery_from: num(r?.free_delivery_from, PRICING.free_delivery_from),
+    min_order: num(r?.min_order, 0),
+  };
+}
+
+/** Validates a promo code against the subtotal (and restaurant, if the code is restaurant-specific). */
+function resolvePromo(store, code, subtotal, restaurantId = null) {
   if (!code) return null;
   if (typeof code !== 'string') throw new PricingError('Invalid promo code');
   const promo = store.findBy('PromoCode', 'code', code.trim().toUpperCase());
   if (!promo || !promo.is_active) throw new PricingError('Invalid promo code');
+  if (promo.restaurant_id && restaurantId && promo.restaurant_id !== restaurantId) throw new PricingError('Invalid promo code');
   if (promo.expires_at && new Date(promo.expires_at) < new Date()) throw new PricingError('Promo code has expired');
   if (promo.max_uses && (promo.used_count || 0) >= promo.max_uses) throw new PricingError('Promo code usage limit reached');
   if (promo.min_order_amount && subtotal < promo.min_order_amount) {
@@ -43,17 +55,22 @@ function resolvePromo(store, code, subtotal) {
 
 /**
  * Calculates all order lines and totals from database prices.
- * @returns {{ items, subtotal, discount_amount, delivery_fee, tax, total, promo }}
+ * @returns {{ restaurant, items, subtotal, discount_amount, delivery_fee, tax, total, promo, fulfillment }}
  */
-function priceOrder(store, { items, promo_code }, lang = 'en') {
+function priceOrder(store, { restaurant_id, items, promo_code, fulfillment }, lang = 'en') {
   if (!Array.isArray(items) || items.length === 0) throw new PricingError('Cart is empty');
   if (items.length > MAX_LINES) throw new PricingError('Too many items in one order');
+
+  const restaurant = typeof restaurant_id === 'string' ? store.get('Restaurant', restaurant_id) : null;
+  if (!restaurant || restaurant.status !== 'approved') throw new PricingError('Restaurant not found');
+  const mode = FULFILLMENT.includes(fulfillment) ? fulfillment : 'delivery';
 
   const ingredients = new Map(store.list('Ingredient').map(i => [i.id, i]));
 
   const lines = items.map((line) => {
     const product = line && typeof line.product_id === 'string' ? store.get('Product', line.product_id) : null;
     if (!product) throw new PricingError('Product not found');
+    if (product.restaurant_id !== restaurant.id) throw new PricingError('All items must be from one restaurant');
     if (product.is_available === false) throw new PricingError(`"${pickLang(product.name, lang)}" is not available right now`);
 
     const quantity = Number(line.quantity);
@@ -94,14 +111,17 @@ function priceOrder(store, { items, promo_code }, lang = 'en') {
     };
   });
 
+  const terms = restaurantTerms(restaurant);
   const subtotal = round2(lines.reduce((sum, l) => sum + l.total_price, 0));
-  const promo = resolvePromo(store, promo_code, subtotal);
+  if (subtotal < terms.min_order) throw new PricingError(`Minimum order is ${terms.min_order}`);
+
+  const promo = resolvePromo(store, promo_code, subtotal, restaurant.id);
   const discount_amount = round2(subtotal * ((promo?.discount_percent || 0) / 100));
-  const delivery_fee = subtotal > PRICING.free_delivery_from ? 0 : PRICING.delivery_fee;
+  const delivery_fee = mode === 'collection' || subtotal >= terms.free_delivery_from ? 0 : terms.delivery_fee;
   const tax = round2((subtotal - discount_amount) * PRICING.tax_rate);
   const total = round2(subtotal - discount_amount + delivery_fee + tax);
 
-  return { items: lines, subtotal, discount_amount, delivery_fee, tax, total, promo };
+  return { restaurant, items: lines, subtotal, discount_amount, delivery_fee, tax, total, promo, fulfillment: mode };
 }
 
-module.exports = { PRICING, PricingError, priceOrder, resolvePromo, round2 };
+module.exports = { PRICING, PricingError, priceOrder, resolvePromo, restaurantTerms, round2 };
