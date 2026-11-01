@@ -1,21 +1,15 @@
 import axios from 'axios';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const TOKEN_KEY = 'base44_access_token';
 
-const apiClient = axios.create({
-  baseURL: API_URL,
-});
+const apiClient = axios.create({ baseURL: API_URL });
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('base44_access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  const lang = localStorage.getItem('app_lang') || 'en';
-
-  config.params = { ...config.params, lang: lang };
-
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  // The server translates names/descriptions and error messages by ?lang=
+  config.params = { ...config.params, lang: localStorage.getItem('app_lang') || 'en' };
   return config;
 });
 
@@ -32,129 +26,102 @@ export const apiErrorMessage = (error) => {
   return error?.request && !error?.response ? texts.offline : texts.generic;
 };
 
+const get = async (url, params) => (await apiClient.get(url, { params })).data;
+const post = async (url, body) => (await apiClient.post(url, body)).data;
+const put = async (url, body) => (await apiClient.put(url, body)).data;
+
 class EntityProxy {
   constructor(entityName) {
     this.entityName = entityName;
   }
 
-  async list(sortBy = '', limit = 100) {
-    const res = await apiClient.get(`/${this.entityName}`, {
-      params: { sort: sortBy, limit }
-    });
-    return res.data;
+  /** @param raw true = keep {en,ru,tk} objects (for editing forms) */
+  list(sortBy = '', limit = 100, raw = false) {
+    return get(`/${this.entityName}`, { sort: sortBy, limit, ...(raw ? { raw: 1 } : {}) });
   }
 
-  async filter(query = {}, sortBy = '', limit = 100) {
-    const res = await apiClient.post(`/${this.entityName}/filter`, {
-      query,
-      sortBy,
-      limit
-    });
-    return res.data;
+  filter(query = {}, sortBy = '', limit = 100, raw = false) {
+    return apiClient.post(`/${this.entityName}/filter`, { query, sortBy, limit }, { params: raw ? { raw: 1 } : {} }).then(r => r.data);
   }
 
-  async create(data) {
-    const res = await apiClient.post(`/${this.entityName}`, data);
-    return res.data;
-  }
-
-  async update(id, data) {
-    const res = await apiClient.put(`/${this.entityName}/${id}`, data);
-    return res.data;
-  }
-
-  // Удалить запись
-  async delete(id) {
-    const res = await apiClient.delete(`/${this.entityName}/${id}`);
-    return res.data;
-  }
+  create(data) { return post(`/${this.entityName}`, data); }
+  update(id, data) { return put(`/${this.entityName}/${id}`, data); }
+  delete(id) { return apiClient.delete(`/${this.entityName}/${id}`).then(r => r.data); }
 }
 
+const ENTITY_NAMES = [
+  'Cuisine', 'Restaurant', 'MenuSection', 'Product', 'Ingredient', 'Offer', 'Review',
+  'PromoCode', 'Order', 'Wishlist', 'PartnerApplication', 'RiderApplication', 'Subscriber',
+];
+
 export const base44 = {
-  entities: {
-    Category: new EntityProxy('Category'),
-    Product: new EntityProxy('Product'),
-    Order: new EntityProxy('Order'),
-    PromoCode: new EntityProxy('PromoCode'),
-    Wishlist: new EntityProxy('Wishlist'),
-    Ingredient: new EntityProxy('Ingredient'),
-    Review: new EntityProxy('Review'),
+  entities: Object.fromEntries(ENTITY_NAMES.map(n => [n, new EntityProxy(n)])),
+
+  // Marketplace
+  market: {
+    home: () => get('/home'),
+    restaurants: (params = {}) => get('/restaurants', params),
+    restaurant: (slug) => get(`/restaurants/${encodeURIComponent(slug)}`),
+    ownerRestaurants: () => get('/owner/restaurants'),
+    applyPartner: (data) => post('/partner-applications', data),
+    decideApplication: (id, decision) => post(`/partner-applications/${id}/${decision}`),
+    applyRider: (data) => post('/rider-applications', data),
+    subscribe: (email) => post('/subscribe', { email }),
+  },
+
+  admin: {
+    users: () => get('/admin/users'),
+    setRole: (id, role) => put(`/admin/users/${id}/role`, { role }),
   },
 
   orders: {
     // Order is priced on the server: send only what was chosen, never prices
-    place: async (data) => {
-      const res = await apiClient.post('/Order', data);
-      return res.data;
-    },
-    checkPromo: async (code, subtotal) => {
-      const res = await apiClient.post('/orders/promo', { code, subtotal });
-      return res.data;
-    },
+    place: (data) => post('/Order', data),
+    track: (number, phone) => get('/orders/track', { number, phone }),
+    checkPromo: (code, subtotal, restaurantId) => post('/orders/promo', { code, subtotal, restaurant_id: restaurantId }),
   },
 
   auth: {
-    me: async () => {
-      const res = await apiClient.get('/auth/me');
-      return res.data;
-    },
+    me: () => get('/auth/me'),
 
     loginViaEmailPassword: async (email, password) => {
-      const res = await apiClient.post('/auth/login', { email, password });
-      if (res.data.access_token) {
-        localStorage.setItem('base44_access_token', res.data.access_token);
-      }
-      return res.data;
+      const data = await post('/auth/login', { email, password });
+      if (data.access_token) localStorage.setItem(TOKEN_KEY, data.access_token);
+      return data;
     },
 
-    register: async (data) => {
-      const res = await apiClient.post('/auth/register', data);
-      return res.data;
-    },
+    register: (data) => post('/auth/register', data),
 
     verifyOtp: async (data) => {
-      const res = await apiClient.post('/auth/verify-otp', data);
-      if (res.data.access_token) {
-        localStorage.setItem('base44_access_token', res.data.access_token);
-      }
-      return res.data;
+      const res = await post('/auth/verify-otp', data);
+      if (res.access_token) localStorage.setItem(TOKEN_KEY, res.access_token);
+      return res;
     },
 
-    resendOtp: async (email) => {
-      const res = await apiClient.post('/auth/resend-otp', { email });
-      return res.data;
-    },
+    resendOtp: (email) => post('/auth/resend-otp', { email }),
+    forgotPassword: (email) => post('/auth/forgot-password', { email }),
+    resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
 
     // Выход из аккаунта: сессия удаляется и на сервере
     logout: async () => {
       try {
-        await apiClient.post('/auth/logout');
+        await post('/auth/logout');
       } catch {
         // offline — the token is removed locally anyway
       }
-      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem(TOKEN_KEY);
       window.location.href = '/login';
     },
 
-    redirectToLogin: () => {
-      window.location.href = '/login';
-    },
-
-    setToken: (token) => {
-      localStorage.setItem('base44_access_token', token);
-    },
-
-    loginWithProvider: (provider, redirectUrl) => {
-      console.log(`[AUTH] Переход к провайдеру: ${provider}`);
-    }
+    redirectToLogin: () => { window.location.href = '/login'; },
+    setToken: (token) => localStorage.setItem(TOKEN_KEY, token),
   },
 
   integrations: {
     Core: {
-      InvokeLLM: async ({ prompt }) => {
-        const res = await apiClient.post('/ai/chat', { prompt });
-        return res.data.response;
-      }
-    }
-  }
+      InvokeLLM: async ({ prompt }) => (await post('/ai/chat', { prompt })).response,
+    },
+  },
 };
+
+export const api = base44;

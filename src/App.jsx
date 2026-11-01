@@ -1,59 +1,60 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
 
-// Импорт вспомогательных компонентов и контекст
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { CartProvider } from '@/lib/cartStore.jsx';
-import { ThemeProvider } from '@/lib/themeStore.jsx';
-import { LanguageProvider, useLanguage } from '@/lib/LanguageContext'; // Провайдер многоязычности
+import { LocationProvider } from '@/lib/locationStore.jsx';
+import { LanguageProvider, useLanguage } from '@/lib/LanguageContext';
 
-// Импорт макетов (Layouts)
 import MainLayout from '@/components/layout/MainLayout';
 
-// Импорт страниц пользователя (Public & Protected Pages)
+// Public pages
 import Home from '@/pages/Home';
-import Menu from '@/pages/Menu';
+import Restaurants from '@/pages/Restaurants';
+import RestaurantPage from '@/pages/Restaurant';
+import Dishes from '@/pages/Dishes';
 import Checkout from '@/pages/Checkout';
 import OrderSuccess from '@/pages/OrderSuccess';
-import Dashboard from '@/pages/Dashboard';
+import Orders from '@/pages/Orders';
 import Wishlist from '@/pages/Wishlist';
-import AllTestimonials from '@/pages/AllTestimonials';
+import { PartnerPage, RiderPage, LegalPage } from '@/pages/JoinPages';
 
-// Импорт страниц авторизации (Auth Pages)
+// Auth
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 
-// Импорт страниц панели администратора (Admin Pages)
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminProducts from '@/pages/admin/AdminProducts';
-import AdminCategories from '@/pages/admin/AdminCategories';
-import AdminOrders from '@/pages/admin/AdminOrders';
-import AdminPromos from '@/pages/admin/AdminPromos';
+// Management pages are loaded on demand (they include charts and editors customers never need)
+const OwnerDashboard = lazy(() => import('@/pages/OwnerDashboard'));
+const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
 
-/**
- * Внутренний компонент приложения, который управляет логикой отображения маршрутов
- * и проверяет состояние загрузки данных пользователя.
- */
-const AuthenticatedApp = () => {
+const PageSpinner = () => (
+    <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-ember-gray border-t-ember-orange" />
+    </div>
+);
+
+function LegalRoute() {
+    const { doc } = useParams();
+    return <LegalPage doc={doc} />;
+}
+
+const AppRoutes = () => {
     const { isLoadingAuth, isLoadingPublicSettings } = useAuth();
     const { t } = useLanguage();
 
-    // Если приложение еще загружает настройки или проверяет токен - показываем спиннер
     if (isLoadingPublicSettings || isLoadingAuth) {
         return (
-            <div className="fixed inset-0 flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-sm text-muted-foreground font-medium animate-pulse">
-                        {t('app_loading')}
-                    </p>
+            <div className="fixed inset-0 flex items-center justify-center bg-white">
+                <div className="flex flex-col items-center gap-5">
+                    <img src="/brand/ember-logo.svg" alt="Ember" className="h-12 w-auto" />
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-ember-gray border-t-ember-orange" role="status" aria-label={t('app_loading')} />
                 </div>
             </div>
         );
@@ -61,67 +62,63 @@ const AuthenticatedApp = () => {
 
     return (
         <Routes>
-            {/* 1. МАРШРУТЫ АВТОРИЗАЦИИ (без общего MainLayout, чистый фон) */}
+            {/* Auth pages — no header/footer */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* 2. ОСНОВНЫЕ МАРШРУТЫ (внутри MainLayout с Навбаром и Футером) */}
             <Route element={<MainLayout />}>
-                {/* Главная и Меню */}
                 <Route path="/" element={<Home />} />
-                <Route path="/menu" element={<Menu />} />
-
-                {/* Отзывы */}
-                <Route path="/testimonials" element={<AllTestimonials />} />
-
-                {/* Заказ и Корзина */}
+                <Route path="/restaurants" element={<Restaurants />} />
+                <Route path="/offers" element={<Restaurants mode="offers" />} />
+                <Route path="/dishes" element={<Dishes />} />
+                <Route path="/r/:slug" element={<RestaurantPage />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/partner" element={<PartnerPage />} />
+                <Route path="/rider" element={<RiderPage />} />
+                <Route path="/legal/:doc" element={<LegalRoute />} />
 
-                {/* Личный кабинет пользователя — только после входа */}
+                {/* Old addresses of the single-restaurant site */}
+                <Route path="/menu" element={<Navigate to="/dishes" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/orders" replace />} />
+                <Route path="/testimonials" element={<Navigate to="/restaurants" replace />} />
+
                 <Route element={<ProtectedRoute />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                 </Route>
-
-                {/* ПАНЕЛЬ АДМИНИСТРАТОРА — только для роли admin */}
-                <Route element={<ProtectedRoute adminOnly />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/products" element={<AdminProducts />} />
-                    <Route path="/admin/categories" element={<AdminCategories />} />
-                    <Route path="/admin/orders" element={<AdminOrders />} />
-                    <Route path="/admin/promos" element={<AdminPromos />} />
+                <Route element={<ProtectedRoute ownerOnly />}>
+                    <Route path="/owner" element={<Suspense fallback={<PageSpinner />}><OwnerDashboard /></Suspense>} />
                 </Route>
-            </Route>
+                <Route element={<ProtectedRoute adminOnly />}>
+                    <Route path="/admin/*" element={<Suspense fallback={<PageSpinner />}><AdminPanel /></Suspense>} />
+                </Route>
 
-            {/* 3. ОБРАБОТКА НЕСУЩЕСТВУЮЩИХ СТРАНИЦ */}
-            <Route path="*" element={<PageNotFound />} />
+                <Route path="*" element={<PageNotFound />} />
+            </Route>
         </Routes>
     );
 };
 
 /**
- * Главный компонент App, который оборачивает всё приложение в необходимые провайдеры.
- * Порядок провайдеров: Auth -> Language -> Theme -> Cart -> Query -> Router.
- * LanguageProvider добавлен для поддержки EN/TK/RU и валюты TMT.
+ * Provider order: Auth -> Language -> Location -> Cart -> Query -> Router.
  */
 function App() {
     return (
         <AuthProvider>
             <LanguageProvider>
-                <ThemeProvider>
+                <LocationProvider>
                     <CartProvider>
                         <QueryClientProvider client={queryClientInstance}>
                             <Router>
-                                <AuthenticatedApp />
+                                <AppRoutes />
                             </Router>
-                            {/* Глобальный компонент для всплывающих уведомлений (Toast) */}
                             <Toaster />
                         </QueryClientProvider>
                     </CartProvider>
-                </ThemeProvider>
+                </LocationProvider>
             </LanguageProvider>
         </AuthProvider>
     );

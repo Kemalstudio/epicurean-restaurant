@@ -28,8 +28,8 @@ function migrate(store) {
     for (const w of store.list('Wishlist')) {
       if (!store.get('Product', w.product_id)) store.remove('Wishlist', w.id);
     }
-    // Promo codes: keep existing ones, make sure fields exist
-    if (store.count('PromoCode') === 0) seed.PromoCode.forEach(p => store.save('PromoCode', p));
+    // Promo codes: keep existing ones, add seed codes that don't exist yet (offers link to them)
+    seed.PromoCode.forEach(p => { if (!store.findBy('PromoCode', 'code', p.code)) store.save('PromoCode', p); });
     for (const p of store.list('PromoCode')) {
       if (p.restaurant_id === undefined) store.save('PromoCode', { ...p, restaurant_id: null, used_count: p.used_count || 0 });
     }

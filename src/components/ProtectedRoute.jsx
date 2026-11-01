@@ -5,9 +5,10 @@ import { useAuth } from '@/lib/AuthContext';
  * Guards nested routes.
  *  - Guests are sent to /login and come back to the requested page after logging in.
  *  - With adminOnly, logged-in non-admins are sent to the home page.
+ *  - With ownerOnly (restaurant owners and admins), others are sent to "Partner with us".
  * The server enforces the same rules on every API call; this only keeps the UI honest.
  */
-export default function ProtectedRoute({ adminOnly = false }) {
+export default function ProtectedRoute({ adminOnly = false, ownerOnly = false }) {
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
   const location = useLocation();
 
@@ -26,6 +27,10 @@ export default function ProtectedRoute({ adminOnly = false }) {
 
   if (adminOnly && user?.role !== 'admin') {
     return <Navigate to="/" replace />;
+  }
+
+  if (ownerOnly && !['owner', 'admin'].includes(user?.role)) {
+    return <Navigate to="/partner" replace />;
   }
 
   return <Outlet />;

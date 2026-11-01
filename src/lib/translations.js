@@ -1,4 +1,6 @@
-export const translations = {
+import { emberTranslations } from './translations.ember.js';
+
+const baseTranslations = {
     en: {
         home: "Home",
         menu: "Menu",
@@ -750,3 +752,8 @@ export const translations = {
         faq_a6: "Введите код в корзине и нажмите «Применить». У некоторых кодов есть минимальная сумма заказа или срок действия."
     }
 };
+
+// Base strings + Ember marketplace strings
+export const translations = Object.fromEntries(
+    Object.keys(baseTranslations).map(lang => [lang, { ...baseTranslations[lang], ...emberTranslations[lang] }])
+);

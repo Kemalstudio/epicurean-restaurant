@@ -3,27 +3,31 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 
+/** Shell for login / register / password pages: Ember logo, kit-style card. */
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   const { t } = useLanguage();
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
-      <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Epicurean
-        </Link>
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
-            <Icon className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
+    <main className="flex min-h-screen items-center justify-center bg-ember-section px-4 py-10">
+      <div className="w-full max-w-[480px]">
+        <div className="mb-8 flex items-center justify-between">
+          <Link to="/" aria-label="Ember — home"><img src="/brand/ember-logo.svg" alt="Ember" className="h-[40px] w-auto" /></Link>
+          <Link to="/" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-black/60 hover:text-ember-orange">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />{t("back_to_home")}
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-card border border-black bg-[#F9F9F9]">
+          <div className="flex items-center gap-4 bg-ember-navy px-8 py-7 text-white">
+            <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-ember-orange" aria-hidden="true">
+              <Icon className="h-6 w-6 text-white" />
+            </span>
+            <div>
+              <h1 className="text-[24px] font-bold leading-tight">{title}</h1>
+              {subtitle && <p className="mt-1 text-[14px] text-white/75">{subtitle}</p>}
+            </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-          {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
+          <div className="p-8">{children}</div>
         </div>
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          {children}
-        </div>
-        {footer && (
-          <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
-        )}
+        {footer && <p className="mt-6 text-center text-[15px] text-black/70">{footer}</p>}
       </div>
     </main>
   );

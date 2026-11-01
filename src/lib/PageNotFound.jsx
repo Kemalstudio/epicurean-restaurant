@@ -7,10 +7,10 @@ export default function PageNotFound() {
     const { t } = useLanguage();
 
     return (
-        <main className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <div className="flex min-h-[60vh] items-center justify-center p-6">
             <div className="max-w-md w-full text-center space-y-6">
                 <div className="space-y-2">
-                    <p className="font-display text-8xl font-bold text-primary/20" aria-hidden="true">404</p>
+                    <p className="text-[120px] font-bold leading-none text-ember-orange/25" aria-hidden="true">404</p>
                     <div className="h-1 w-16 bg-primary/30 mx-auto rounded-full" />
                 </div>
 
@@ -25,11 +25,11 @@ export default function PageNotFound() {
                             <Home className="w-4 h-4 mr-2" aria-hidden="true" /> {t('go_home')}
                         </Button>
                     </Link>
-                    <Link to="/menu">
-                        <Button variant="outline" className="rounded-xl px-6 w-full">{t('browse_menu')}</Button>
+                    <Link to="/restaurants">
+                        <Button variant="outline" className="rounded-xl px-6 w-full">{t('browse_restaurants')}</Button>
                     </Link>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

@@ -238,6 +238,53 @@ app.post('/api/auth/login', rateLimit(10, 15 * 60 * 1000), (req, res) => {
   res.json({ access_token: sessions.create(user.id, SESSION_TTL_MS), user: publicUser(user) });
 });
 
+// ---------- Password reset ----------
+const RESET_TTL_MS = 30 * 60 * 1000;
+const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+
+app.post('/api/auth/forgot-password', rateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = isValidEmail(email) ? store.findBy('User', 'email', email) : null;
+  if (user) {
+    const token = crypto.randomBytes(32).toString('hex');
+    // Only the hash is stored; one active link per user
+    store.list('PasswordReset').filter(r => r.user_id === user.id).forEach(r => store.remove('PasswordReset', r.id));
+    store.save('PasswordReset', { id: sha256(token), user_id: user.id, expiresAt: Date.now() + RESET_TTL_MS });
+    const origin = FRONTEND_URL || (typeof req.headers.origin === 'string' ? req.headers.origin : '');
+    const link = `${origin}/reset-password?token=${token}`;
+    try {
+      await transporter.sendMail({
+        from: MAIL_FROM, to: email, subject: 'Ember — reset your password',
+        text: `To set a new password open this link (valid for 30 minutes):\n${link}\n\nIf you didn't ask for this, ignore this email.`,
+      });
+    } catch (error) {
+      console.error(`[Mail] Failed to send reset link: ${error.message}`);
+      if (!IS_PROD) console.log(`[DEV] Password reset link for ${email}: ${link}`);
+    }
+  }
+  res.json({ success: true }); // same answer either way — no user enumeration
+});
+
+app.post('/api/auth/reset-password', rateLimit(10, 15 * 60 * 1000), (req, res) => {
+  const token = String(req.body.token || '');
+  const { password } = req.body;
+  if (!isValidPassword(password)) return res.status(400).json({ message: 'Password must be 8–128 characters' });
+  const entry = token ? store.get('PasswordReset', sha256(token)) : null;
+  if (!entry || entry.expiresAt < Date.now()) {
+    if (entry) store.remove('PasswordReset', entry.id);
+    return res.status(400).json({ message: 'Reset link is invalid or expired' });
+  }
+  const user = store.get('User', entry.user_id);
+  if (!user) return res.status(400).json({ message: 'Reset link is invalid or expired' });
+  store.transaction(() => {
+    store.save('User', { ...user, passwordHash: hashPassword(password) });
+    store.remove('PasswordReset', entry.id);
+  });
+  sessions.destroyAllForUser(user.id); // log out everywhere
+  res.json({ success: true });
+});
+
 app.post('/api/auth/logout', (req, res) => {
   sessions.destroy(bearerToken(req));
   res.json({ success: true });
@@ -289,6 +336,22 @@ app.post('/api/orders/promo', rateLimit(30, 15 * 60 * 1000), (req, res) => {
     if (err instanceof PricingError) return res.status(400).json({ message: err.message });
     throw err;
   }
+});
+
+// Guest order tracking: order number + the phone used for the order. Returns no personal data.
+app.get('/api/orders/track', rateLimit(30, 15 * 60 * 1000), (req, res) => {
+  const number = cleanText(req.query.number, 40).toUpperCase();
+  const phoneDigits = String(req.query.phone || '').replace(/\D/g, '');
+  if (!number || phoneDigits.length < 6) return res.status(400).json({ message: 'Please fill in all required fields' });
+  const order = store.findBy('Order', 'order_number', number);
+  // Compare the last 8 digits so "+993 61 ..." and "861 ..." both match
+  const matches = order && String(order.customer_phone || '').replace(/\D/g, '').slice(-8) === phoneDigits.slice(-8);
+  if (!matches) return res.status(404).json({ message: 'Order not found' });
+  const { order_number, status, restaurant_name, restaurant_slug, fulfillment, items, total, estimated_delivery, created_at } = order;
+  res.json({
+    order_number, status, restaurant_name, restaurant_slug, fulfillment, total, estimated_delivery, created_at,
+    items: (items || []).map(i => ({ product_name: i.product_name, quantity: i.quantity, size: i.size })),
+  });
 });
 
 app.post('/api/Order', rateLimit(20, 15 * 60 * 1000), (req, res) => {

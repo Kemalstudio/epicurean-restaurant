@@ -1,113 +1,66 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
+import { base44, apiErrorMessage } from "@/api/base44Client";
 import AuthLayout from "@/components/AuthLayout";
+import { toast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/LanguageContext";
+
+const inputCls = "input-pill border-[#CFCFCF] bg-[#F6F6F6] pl-14 focus:bg-white";
 
 export default function ResetPassword() {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const resetToken = searchParams.get("token");
-
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const token = searchParams.get("token");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (password.length < 8) return setError(t("password_too_short"));
+    if (password !== confirm) return setError(t("passwords_mismatch"));
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
-      window.location.href = "/login";
+      await base44.auth.resetPassword(token, password);
+      toast({ title: t("password_changed"), description: t("password_changed_desc") });
+      navigate("/login", { replace: true });
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
-  if (!resetToken) {
+  if (!token) {
     return (
-      <AuthLayout
-        icon={AlertTriangle}
-        title="Invalid reset link"
-        subtitle="This password reset link is missing or invalid"
-        footer={
-          <Link to="/forgot-password" className="text-primary font-medium hover:underline">
-            Request a new link
-          </Link>
-        }
-      >
-        <p className="text-sm text-foreground text-center">
-          The link you used appears to be incomplete. Please request a new password reset email.
-        </p>
+      <AuthLayout icon={AlertTriangle} title={t("reset_invalid_title")} subtitle={t("reset_invalid_desc")}
+        footer={<Link to="/forgot-password" className="font-semibold text-ember-orange hover:underline">{t("request_new_link")}</Link>}>
+        <p className="text-center text-[15px]">{t("reset_invalid_desc")}</p>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout
-      icon={Lock}
-      title="New password"
-      subtitle="Enter your new password below"
-    >
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              autoFocus
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
+    <AuthLayout icon={Lock} title={t("new_password_title")} subtitle={t("new_password_subtitle")}>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && <div role="alert" className="rounded-[10px] bg-ember-red/10 p-3 text-[14px] text-ember-red">{error}</div>}
+        {[["password", t("password"), password, setPassword], ["confirm", t("confirm_password"), confirm, setConfirm]].map(([id, label, value, set]) => (
+          <div key={id}>
+            <label htmlFor={id} className="mb-2 block pl-6 text-[14px] font-semibold text-ember-navy">{label}</label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-black/50" aria-hidden="true" />
+              <input id={id} type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={value} onChange={(e) => set(e.target.value)} className={inputCls} />
+            </div>
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="confirm"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resetting...
-            </>
-          ) : (
-            "Reset password"
-          )}
-        </Button>
+        ))}
+        <p className="pl-6 text-[13px] text-black/60">{t("password_hint")}</p>
+        <button type="submit" disabled={loading} className="btn-orange h-[57px] w-full text-[18px]">
+          {loading ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{t("saving")}</> : t("save_password")}
+        </button>
       </form>
     </AuthLayout>
   );

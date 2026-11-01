@@ -1,7 +1,8 @@
 // Demo marketplace data (schema v2). Written once, when the database is created or migrated.
 // All restaurants are fictional. Photos: Unsplash (free for commercial use).
 
-const img = (id, w = 800) => `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
+// Photos are self-hosted in /public/img (downloaded once from Unsplash, converted to WebP)
+const img = (id, w = 800) => `/img/${id}-${w}.webp`;
 const t = (en, ru, tk) => ({ en, ru, tk });
 
 const WEEK_10_23 = [['10:00', '23:00'], ['10:00', '23:00'], ['10:00', '23:00'], ['10:00', '23:00'], ['10:00', '00:00'], ['10:00', '00:00'], ['11:00', '22:00']];
@@ -51,7 +52,7 @@ const Restaurant = [
     id: 'r-epicurean', slug: 'epicurean', name: 'Epicurean',
     tagline: t('Italian classics with a modern twist', 'Итальянская классика в современном прочтении', 'Häzirki zaman görnüşindäki italýan nusgawylary'),
     description: t('Fresh pasta, wood-fired pizza and premium burgers.', 'Свежая паста, пицца из печи и премиальные бургеры.', 'Täze pasta, odun peçde bişirilen pissa we ýokary hilli burgerler.'),
-    logo_url: img('1528751014936-863e6e7a319c', 400), cover_url: img('1414235077428-338989a2e8c0', 1400), hero_image_url: img('1473093226795-af9932fe5856', 900),
+    logo_url: img('1504674900247-0877df9cc836', 400), cover_url: img('1414235077428-338989a2e8c0', 1400), hero_image_url: img('1473093226795-af9932fe5856', 900),
     cuisine_ids: ['cu-pasta', 'cu-pizza', 'cu-burgers'], rating: 4.8, review_count: 1, is_featured: true, discount_percent: 15,
     address: 'Magtymguly Ave 12, Ashgabat', lat: 37.9420, lng: 58.3790, hours: WEEK_10_23, delivery_time: '20-25', min_order: 60,
   }),
@@ -331,8 +332,8 @@ const Product = [
 
 const Offer = [
   { id: 'o1', restaurant_id: 'r-epicurean', title: t('First Order Discount', 'Скидка на первый заказ', 'Ilkinji sargyda arzanladyş'), discount_percent: 15, promo_code: 'WELCOME', image_url: img('1512428559087-560fa5ceab42', 800), is_active: true },
-  { id: 'o2', restaurant_id: 'r-green-bowl', title: t('Vegan Discount', 'Скидка на веган-меню', 'Wegan arzanladyşy'), discount_percent: 17, image_url: img('1543339308-43e59d6b73a6', 800), is_active: true },
-  { id: 'o3', restaurant_id: 'r-sweet', title: t('Free Dessert Offer', 'Десерт в подарок', 'Mugt desert'), discount_percent: 100, image_url: img('1576618148400-f54bed99fcfd', 800), is_active: true },
+  { id: 'o2', restaurant_id: 'r-green-bowl', title: t('Vegan Discount', 'Скидка на веган-меню', 'Wegan arzanladyşy'), discount_percent: 17, promo_code: 'VEGAN17', image_url: img('1543339308-43e59d6b73a6', 800), is_active: true },
+  { id: 'o3', restaurant_id: 'r-sweet', title: t('Sweet Weekdays', 'Сладкие будни', 'Süýji iş günleri'), discount_percent: 10, promo_code: 'SWEET10', image_url: img('1576618148400-f54bed99fcfd', 800), is_active: true },
 ];
 
 const Review = [
@@ -343,6 +344,8 @@ const Review = [
 
 const PromoCode = [
   { id: 'pr1', code: 'WELCOME', discount_percent: 15, is_active: true, min_order_amount: 0, used_count: 0, restaurant_id: null },
+  { id: 'pr-vegan17', code: 'VEGAN17', discount_percent: 17, is_active: true, min_order_amount: 0, used_count: 0, restaurant_id: 'r-green-bowl' },
+  { id: 'pr-sweet10', code: 'SWEET10', discount_percent: 10, is_active: true, min_order_amount: 0, used_count: 0, restaurant_id: 'r-sweet' },
 ];
 
 module.exports = { Cuisine, Ingredient, Restaurant, MenuSection, Product, Offer, Review, PromoCode };
