@@ -137,6 +137,12 @@ class Api {
     } catch (_) {}
   }
 
+  Future<void> subscribe(String email) => post('/subscribe', {'email': email});
+  Future<void> applyPartner(Map<String, dynamic> data) =>
+      post('/partner-applications', data);
+  Future<void> applyRider(Map<String, dynamic> data) =>
+      post('/rider-applications', data);
+
   Future<void> postReview(String restaurantId, int rating, String comment) =>
       post('/Review', {
         'restaurant_id': restaurantId,
