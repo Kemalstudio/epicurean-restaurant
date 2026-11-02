@@ -311,137 +311,150 @@ class _Hero extends StatelessWidget {
         borderRadius: BorderRadius.circular(Ember.radius),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(42, 42, 42, 0),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Ember.radius),
-                  child: AspectRatio(
-                    aspectRatio: 228 / 142,
-                    child: NetImage(r['hero_image_url'] ?? r['cover_url']),
-                  ),
-                ),
-                Positioned(
-                  left: -12,
-                  bottom: -8,
-                  child: Container(
-                    width: 58,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(Ember.radius),
-                      boxShadow: Ember.softShadow,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          numOf(r['rating']).toStringAsFixed(1),
-                          style: Ember.text(22, height: 1),
-                        ),
-                        Stars(numOf(r['rating']), size: 9),
-                        Text(
-                          app.t('reviews_n', {'count': r['review_count'] ?? 0}),
-                          textAlign: TextAlign.center,
-                          style: Ember.text(7, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          // Kit: the restaurant photo shows faintly behind the gray card
+          Positioned.fill(
+            child: NetImage(r['cover_url'] ?? r['hero_image_url']),
           ),
-          const SizedBox(height: 34),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 61),
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-              decoration: BoxDecoration(
-                color: r['open_now'] == true ? Ember.orange : Ember.navy,
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(Ember.radius),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.schedule, color: Colors.white, size: 28),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      openText(app, r),
-                      style: Ember.text(
-                        18,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 44, 16, 30),
-            child: Column(
-              children: [
-                if ('${r['tagline'] ?? ''}'.isNotEmpty)
-                  Text(
-                    '${r['tagline']}',
-                    textAlign: TextAlign.center,
-                    style: Ember.text(13),
-                  ),
-                Text(
-                  '${r['name']}',
-                  textAlign: TextAlign.center,
-                  style: Ember.text(
-                    28,
-                    weight: FontWeight.w700,
-                    color: Ember.navy,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final b in badges)
-                  Container(
-                    margin: const EdgeInsets.only(top: 14),
-                    height: 63,
-                    constraints: const BoxConstraints(maxWidth: 330),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Ember.navy,
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(Ember.pill),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(b.$1, color: Colors.white, size: 30),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            b.$2,
-                            style: Ember.text(
-                              16,
-                              weight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          const Positioned.fill(child: ColoredBox(color: Color(0xE0E2E2E2))),
+          _heroContent(app, badges),
         ],
       ),
+    );
+  }
+
+  Widget _heroContent(AppState app, List<(IconData, String)> badges) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(42, 42, 42, 0),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(Ember.radius),
+                child: AspectRatio(
+                  aspectRatio: 228 / 142,
+                  child: NetImage(r['hero_image_url'] ?? r['cover_url']),
+                ),
+              ),
+              Positioned(
+                left: -12,
+                bottom: -8,
+                child: Container(
+                  width: 58,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Ember.radius),
+                    boxShadow: Ember.softShadow,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        numOf(r['rating']).toStringAsFixed(1),
+                        style: Ember.text(22, height: 1),
+                      ),
+                      Stars(numOf(r['rating']), size: 9),
+                      Text(
+                        app.t('reviews_n', {'count': r['review_count'] ?? 0}),
+                        textAlign: TextAlign.center,
+                        style: Ember.text(7, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 34),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 61),
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+            decoration: BoxDecoration(
+              color: r['open_now'] == true ? Ember.orange : Ember.navy,
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(Ember.radius),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.schedule, color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    openText(app, r),
+                    style: Ember.text(
+                      18,
+                      weight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 44, 16, 30),
+          child: Column(
+            children: [
+              if ('${r['tagline'] ?? ''}'.isNotEmpty)
+                Text(
+                  '${r['tagline']}',
+                  textAlign: TextAlign.center,
+                  style: Ember.text(13),
+                ),
+              Text(
+                '${r['name']}',
+                textAlign: TextAlign.center,
+                style: Ember.text(
+                  28,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final b in badges)
+                Container(
+                  margin: const EdgeInsets.only(top: 14),
+                  height: 63,
+                  constraints: const BoxConstraints(maxWidth: 330),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Ember.navy,
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(Ember.pill),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(b.$1, color: Colors.white, size: 30),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          b.$2,
+                          style: Ember.text(
+                            16,
+                            weight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
