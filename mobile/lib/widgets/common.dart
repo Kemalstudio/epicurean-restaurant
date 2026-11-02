@@ -110,10 +110,12 @@ class EmberHeader extends StatelessWidget {
             border: Border(bottom: BorderSide(color: Colors.black)),
           ),
           child: Row(
+            // stretch: the divider line runs the full header height (kit)
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Padding(
                 padding: EdgeInsets.only(left: 16),
-                child: EmberLogo(),
+                child: Center(child: EmberLogo()),
               ),
               const Spacer(),
               Container(
@@ -121,10 +123,10 @@ class EmberHeader extends StatelessWidget {
                 decoration: const BoxDecoration(
                   border: Border(left: BorderSide(color: Colors.black)),
                 ),
-                child: IconButton(
-                  onPressed: onMenu,
-                  icon: const Icon(Icons.menu, size: 52),
-                  tooltip: app.t('open_menu'),
+                child: Semantics(
+                  button: true,
+                  label: app.t('open_menu'),
+                  child: InkWell(onTap: onMenu, child: const _Hamburger()),
                 ),
               ),
             ],
@@ -133,6 +135,8 @@ class EmberHeader extends StatelessWidget {
         SizedBox(
           height: 77,
           child: Row(
+            // both blocks fill the whole 77px band
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: Semantics(
@@ -260,6 +264,29 @@ class EmberHeader extends StatelessWidget {
   }
 }
 
+/// Kit hamburger: three thick navy bars with rounded ends.
+class _Hamburger extends StatelessWidget {
+  const _Hamburger();
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < 3; i++)
+          Container(
+            width: 56,
+            height: 5,
+            margin: EdgeInsets.only(top: i == 0 ? 0 : 11),
+            decoration: BoxDecoration(
+              color: Ember.navy,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
 /// Navy discount badge with rounded bottom corners.
 class DiscountBadge extends StatelessWidget {
   final num percent;
@@ -381,7 +408,7 @@ class CuisineTile extends StatelessWidget {
                 // so large system fonts shrink the photo instead of overflowing.
                 Expanded(child: NetImage(c['image_url'])),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(18, 8, 12, 9),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -390,7 +417,7 @@ class CuisineTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Ember.text(
-                          14,
+                          15,
                           weight: FontWeight.w700,
                           color: Ember.orange,
                         ),
@@ -442,9 +469,14 @@ class RestaurantTile extends StatelessWidget {
             color: Ember.orange,
             child: Column(
               children: [
-                AspectRatio(aspectRatio: 1, child: NetImage(r['logo_url'])),
+                // kit: 122 x 156 tile, 104px photo + orange caption
+                SizedBox(
+                  height: 104,
+                  width: double.infinity,
+                  child: NetImage(r['logo_url']),
+                ),
                 Container(
-                  height: 50,
+                  height: 52,
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Text(
