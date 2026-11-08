@@ -5,91 +5,193 @@ import '../core/state.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
 
-/// Shared frame for auth screens: logo, navy header with orange icon, card.
+/// Kit "Log In" frame: dark top with a centered title and subtitle, white
+/// rounded sheet with the form.
 class _AuthFrame extends StatelessWidget {
-  final IconData icon;
   final String title, subtitle;
   final List<Widget> children;
   const _AuthFrame({
-    required this.icon,
     required this.title,
     required this.subtitle,
     required this.children,
   });
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
-      backgroundColor: Ember.section,
-      appBar: AppBar(
-        backgroundColor: Ember.section,
-        elevation: 0,
-        title: const EmberLogo(height: 32),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F9F9),
-                border: Border.all(color: Colors.black),
-                borderRadius: BorderRadius.circular(Ember.radius),
+      backgroundColor: Ember.dark,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Stack(
+              children: [
+                const Positioned.fill(child: _AuthDecor()),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(24, top + 6, 24, 50),
+                  child: Column(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Navigator.canPop(context)
+                            ? const BackButtonKit(white: true)
+                            : const SizedBox(height: 45),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: Ember.text(
+                          30,
+                          weight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        textAlign: TextAlign.center,
+                        style: Ember.text(
+                          16,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                24 + MediaQuery.paddingOf(context).bottom,
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    color: Ember.navy,
-                    padding: const EdgeInsets.all(22),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: Ember.orange,
-                          child: Icon(icon, color: Colors.white),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: Ember.text(
-                                  22,
-                                  weight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                subtitle,
-                                style: Ember.text(13, color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: children,
-                    ),
-                  ),
-                ],
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: AutofillGroup(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-Widget _gap() => const SizedBox(height: 14);
+/// The kit's faint line fan in the top-left corner of the dark header.
+class _AuthDecor extends StatelessWidget {
+  const _AuthDecor();
+  @override
+  Widget build(BuildContext context) =>
+      IgnorePointer(child: CustomPaint(painter: _FanPainter()));
+}
+
+class _FanPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Colors.white.withValues(alpha: 0.06)
+      ..strokeWidth = 2;
+    const center = Offset(-20, -20);
+    for (var a = 0.0; a <= 1.58; a += 0.09) {
+      final dir = Offset.fromDirection(a);
+      canvas.drawLine(center + dir * 60, center + dir * 150, p);
+    }
+    final dash = Paint()
+      ..color = Colors.white.withValues(alpha: 0.08)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final path = Path()
+      ..moveTo(size.width - 70, 0)
+      ..quadraticBezierTo(
+        size.width - 10,
+        size.height * 0.35,
+        size.width + 20,
+        size.height * 0.7,
+      );
+    for (final m in path.computeMetrics()) {
+      for (var d = 0.0; d < m.length; d += 14) {
+        canvas.drawPath(m.extractPath(d, d + 7), dash);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+Widget _gap() => const SizedBox(height: 24);
+
+Widget _errorText(String? e) => e == null
+    ? const SizedBox.shrink()
+    : Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Text(e, style: Ember.text(14, color: Ember.red)),
+      );
+
+/// "Don't have an account?  SIGN UP" line.
+Widget _switchLine(String text, String action, VoidCallback onTap) => Wrap(
+  alignment: WrapAlignment.center,
+  crossAxisAlignment: WrapCrossAlignment.center,
+  children: [
+    Text(text, style: Ember.text(16, color: Ember.text3)),
+    TextButton(
+      onPressed: onTap,
+      child: Text(
+        action.toUpperCase(),
+        style: Ember.text(14, weight: FontWeight.w700, color: Ember.orange),
+      ),
+    ),
+  ],
+);
+
+class _PasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final ValueChanged<String>? onSubmitted;
+  final bool newPassword;
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    this.onSubmitted,
+    this.newPassword = false,
+  });
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _hidden = true;
+  @override
+  Widget build(BuildContext context) => KitField(
+    label: widget.label,
+    controller: widget.controller,
+    obscure: _hidden,
+    hint: '• • • • • • • • • •',
+    autofill: [
+      widget.newPassword ? AutofillHints.newPassword : AutofillHints.password,
+    ],
+    onSubmitted: widget.onSubmitted,
+    suffix: IconButton(
+      tooltip: widget.label,
+      onPressed: () => setState(() => _hidden = !_hidden),
+      icon: Icon(
+        _hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        color: const Color(0xFFB4B9CA),
+      ),
+    ),
+  );
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -126,34 +228,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final t = context.watch<AppState>().t;
     return _AuthFrame(
-      icon: Icons.login,
-      title: t('welcome_back'),
+      title: t('log_in'),
       subtitle: t('login_subtitle'),
       children: [
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(_error!, style: Ember.text(14, color: Ember.red)),
-          ),
-        TextField(
+        _errorText(_error),
+        KitField(
+          label: t('email'),
           controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
-          decoration: InputDecoration(
-            labelText: t('email'),
-            prefixIcon: const Icon(Icons.mail_outline),
-          ),
+          hint: 'example@gmail.com',
+          keyboard: TextInputType.emailAddress,
+          autofill: const [AutofillHints.email],
+          action: TextInputAction.next,
         ),
         _gap(),
-        TextField(
+        _PasswordField(
           controller: _password,
-          obscureText: true,
-          autofillHints: const [AutofillHints.password],
+          label: t('password'),
           onSubmitted: (_) => _submit(),
-          decoration: InputDecoration(
-            labelText: t('password'),
-            prefixIcon: const Icon(Icons.lock_outline),
-          ),
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -164,36 +255,20 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: Text(
               t('forgot_password'),
-              style: Ember.text(13, color: Ember.orange),
+              style: Ember.text(14, color: Ember.orange),
             ),
           ),
         ),
-        OrangeButton(
-          _busy ? t('logging_in') : t('log_in'),
-          onPressed: _busy ? null : _submit,
-          height: 56,
-        ),
-        _gap(),
-        Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(t('no_account'), style: Ember.text(14)),
-            TextButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const RegisterScreen()),
-              ),
-              child: Text(
-                t('create_one'),
-                style: Ember.text(
-                  14,
-                  weight: FontWeight.w600,
-                  color: Ember.orange,
-                ),
-              ),
-            ),
-          ],
+        const SizedBox(height: 8),
+        PrimaryButton(t('log_in'), loading: _busy, onPressed: _submit),
+        const SizedBox(height: 28),
+        _switchLine(
+          t('no_account'),
+          t('sign_up'),
+          () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const RegisterScreen()),
+          ),
         ),
       ],
     );
@@ -233,16 +308,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final app = context.watch<AppState>();
     final t = app.t;
     if (_otp) {
+      // Kit "Verification": code boxes under the dark header
       return _AuthFrame(
-        icon: Icons.mark_email_read_outlined,
         title: t('verify_email'),
         subtitle: t('code_sent_to', {'email': _email.text.trim()}),
         children: [
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(_error!, style: Ember.text(14, color: Ember.red)),
-            ),
+          _errorText(_error),
+          Text(
+            t('code').toUpperCase(),
+            style: Ember.text(13, color: Ember.text1),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _code,
             keyboardType: TextInputType.number,
@@ -250,118 +326,98 @@ class _RegisterScreenState extends State<RegisterScreen> {
             textAlign: TextAlign.center,
             autofillHints: const [AutofillHints.oneTimeCode],
             style: Ember.text(
-              28,
+              26,
               weight: FontWeight.w700,
-            ).copyWith(letterSpacing: 12),
+              color: Ember.navy,
+            ).copyWith(letterSpacing: 14),
             decoration: const InputDecoration(counterText: ''),
           ),
-          _gap(),
-          OrangeButton(
-            _busy ? t('verifying') : t('verify_account'),
-            height: 56,
-            onPressed: _busy
-                ? null
-                : () => _run(() async {
-                    final res = await Api.instance.verifyOtp(
-                      _email.text.trim(),
-                      _code.text.trim(),
-                    );
-                    await app.signedIn(res);
-                    if (context.mounted) Navigator.pop(context);
-                  }),
-          ),
-          TextButton(
-            onPressed: () => _run(() async {
-              await Api.instance.resendOtp(_email.text.trim());
-              if (context.mounted) showMessage(context, t('new_code_sent'));
-            }),
-            child: Text(
-              '${t('no_code')} ${t('resend')}',
-              style: Ember.text(
-                14,
-                weight: FontWeight.w600,
-                color: Ember.orange,
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => _run(() async {
+                await Api.instance.resendOtp(_email.text.trim());
+                if (context.mounted) showMessage(context, t('new_code_sent'));
+              }),
+              child: Text(
+                t('resend'),
+                style: Ember.text(
+                  14,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ).copyWith(decoration: TextDecoration.underline),
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          PrimaryButton(
+            t('verify_account'),
+            loading: _busy,
+            onPressed: () => _run(() async {
+              final res = await Api.instance.verifyOtp(
+                _email.text.trim(),
+                _code.text.trim(),
+              );
+              await app.signedIn(res);
+              if (context.mounted) Navigator.pop(context);
+            }),
           ),
         ],
       );
     }
     return _AuthFrame(
-      icon: Icons.person_add_alt,
-      title: t('create_account_title'),
+      title: t('sign_up'),
       subtitle: t('register_subtitle'),
       children: [
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(_error!, style: Ember.text(14, color: Ember.red)),
-          ),
-        TextField(
+        _errorText(_error),
+        KitField(
+          label: t('full_name'),
           controller: _name,
-          autofillHints: const [AutofillHints.name],
-          decoration: InputDecoration(
-            labelText: t('full_name'),
-            prefixIcon: const Icon(Icons.person_outline),
-          ),
+          hint: 'John Doe',
+          autofill: const [AutofillHints.name],
+          action: TextInputAction.next,
         ),
         _gap(),
-        TextField(
+        KitField(
+          label: t('email'),
           controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            labelText: t('email'),
-            prefixIcon: const Icon(Icons.mail_outline),
-          ),
+          hint: 'example@gmail.com',
+          keyboard: TextInputType.emailAddress,
+          autofill: const [AutofillHints.email],
+          action: TextInputAction.next,
         ),
         _gap(),
-        TextField(
+        _PasswordField(
           controller: _password,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: t('password'),
-            helperText: t('password_hint'),
-            prefixIcon: const Icon(Icons.lock_outline),
+          label: t('password'),
+          newPassword: true,
+        ),
+        const SizedBox(height: 6),
+        Text(t('password_hint'), style: Ember.text(12, color: Ember.text2)),
+        const SizedBox(height: 32),
+        PrimaryButton(
+          t('sign_up'),
+          loading: _busy,
+          onPressed: () => _run(() async {
+            if (_password.text.length < 8) {
+              throw ApiError(400, t('password_too_short'));
+            }
+            await Api.instance.register(
+              _name.text.trim(),
+              _email.text.trim(),
+              _password.text,
+            );
+            setState(() => _otp = true);
+          }),
+        ),
+        const SizedBox(height: 20),
+        _switchLine(
+          t('have_account'),
+          t('log_in'),
+          () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
           ),
-        ),
-        _gap(),
-        OrangeButton(
-          _busy ? t('creating_account') : t('create_account'),
-          height: 56,
-          onPressed: _busy
-              ? null
-              : () => _run(() async {
-                  if (_password.text.length < 8) {
-                    throw ApiError(400, t('password_too_short'));
-                  }
-                  await Api.instance.register(
-                    _name.text.trim(),
-                    _email.text.trim(),
-                    _password.text,
-                  );
-                  setState(() => _otp = true);
-                }),
-        ),
-        Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(t('have_account'), style: Ember.text(14)),
-            TextButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              ),
-              child: Text(
-                t('log_in'),
-                style: Ember.text(
-                  14,
-                  weight: FontWeight.w600,
-                  color: Ember.orange,
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );
@@ -381,44 +437,40 @@ class _ForgotScreenState extends State<ForgotScreen> {
   Widget build(BuildContext context) {
     final t = context.watch<AppState>().t;
     return _AuthFrame(
-      icon: Icons.key,
-      title: t('reset_title'),
+      title: t('forgot_password'),
       subtitle: t('reset_subtitle'),
       children: [
         if (_sent)
           Text(
             t('reset_sent'),
             textAlign: TextAlign.center,
-            style: Ember.text(15),
+            style: Ember.text(16, color: Ember.text3, height: 1.5),
           )
         else ...[
-          TextField(
+          KitField(
+            label: t('email'),
             controller: _email,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: t('email'),
-              prefixIcon: const Icon(Icons.mail_outline),
-            ),
+            hint: 'example@gmail.com',
+            keyboard: TextInputType.emailAddress,
+            autofill: const [AutofillHints.email],
           ),
-          _gap(),
-          OrangeButton(
-            _busy ? t('sending') : t('send_reset_link'),
-            height: 56,
-            onPressed: _busy
-                ? null
-                : () async {
-                    setState(() => _busy = true);
-                    try {
-                      await Api.instance.forgotPassword(_email.text.trim());
-                      setState(() => _sent = true);
-                    } on ApiError catch (e) {
-                      if (context.mounted) {
-                        showMessage(context, e.message, error: true);
-                      }
-                    } finally {
-                      if (mounted) setState(() => _busy = false);
-                    }
-                  },
+          const SizedBox(height: 30),
+          PrimaryButton(
+            t('send_code'),
+            loading: _busy,
+            onPressed: () async {
+              setState(() => _busy = true);
+              try {
+                await Api.instance.forgotPassword(_email.text.trim());
+                setState(() => _sent = true);
+              } on ApiError catch (e) {
+                if (context.mounted) {
+                  showMessage(context, e.message, error: true);
+                }
+              } finally {
+                if (mounted) setState(() => _busy = false);
+              }
+            },
           ),
         ],
       ],

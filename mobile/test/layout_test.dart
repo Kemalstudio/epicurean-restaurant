@@ -23,23 +23,31 @@ import 'package:http/testing.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Map<String, dynamic> fixture(String name) => jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as Map<String, dynamic>;
-List<dynamic> fixtureList(String name) => jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as List<dynamic>;
+Map<String, dynamic> fixture(String name) =>
+    jsonDecode(File('test/fixtures/$name.json').readAsStringSync())
+        as Map<String, dynamic>;
+List<dynamic> fixtureList(String name) =>
+    jsonDecode(File('test/fixtures/$name.json').readAsStringSync())
+        as List<dynamic>;
 
 http.Client mockApi() => MockClient((req) async {
-      final lang = req.url.queryParameters['lang'] ?? 'en';
-      final p = req.url.path.replaceFirst(RegExp(r'^/api'), '');
-      String? file;
-      if (p == '/home') file = 'home_$lang';
-      if (p == '/restaurants') file = 'restaurants_$lang';
-      if (p.startsWith('/restaurants/')) file = 'r_${p.split('/').last}_$lang';
-      if (p == '/Ingredient') file = 'ingredients_$lang';
-      if (file != null && File('test/fixtures/$file.json').existsSync()) {
-        return http.Response.bytes(File('test/fixtures/$file.json').readAsBytesSync(), 200, headers: {'content-type': 'application/json'});
-      }
-      if (p == '/Order/filter') return http.Response('[]', 200);
-      return http.Response('{"message":"Not found"}', 404);
-    });
+  final lang = req.url.queryParameters['lang'] ?? 'en';
+  final p = req.url.path.replaceFirst(RegExp(r'^/api'), '');
+  String? file;
+  if (p == '/home') file = 'home_$lang';
+  if (p == '/restaurants') file = 'restaurants_$lang';
+  if (p.startsWith('/restaurants/')) file = 'r_${p.split('/').last}_$lang';
+  if (p == '/Ingredient') file = 'ingredients_$lang';
+  if (file != null && File('test/fixtures/$file.json').existsSync()) {
+    return http.Response.bytes(
+      File('test/fixtures/$file.json').readAsBytesSync(),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
+  }
+  if (p == '/Order/filter') return http.Response('[]', 200);
+  return http.Response('{"message":"Not found"}', 404);
+});
 
 const sizes = [Size(320, 568), Size(360, 740), Size(390, 844), Size(430, 932)];
 const langs = ['en', 'ru', 'tk'];
@@ -54,35 +62,44 @@ final screens = <String, Widget Function()>{
   'basket': () => const BasketScreen(),
   'checkout': () => const CheckoutScreen(),
   'orders': () => const OrdersScreen(orderNumber: 'EM-TEST12345'),
-  'success': () => OrderSuccessScreen(order: const {
-        'order_number': 'EM-MVXOBMJJ4E3A', 'restaurant_name': 'Napoli Wood Fire', 'total': 1234.5,
-        'estimated_delivery': '25-35 min', 'fulfillment': 'delivery', 'status': 'received',
-      }),
+  'success': () => OrderSuccessScreen(
+    order: const {
+      'order_number': 'EM-MVXOBMJJ4E3A',
+      'restaurant_name': 'Napoli Wood Fire',
+      'total': 1234.5,
+      'estimated_delivery': '25-35 min',
+      'fulfillment': 'delivery',
+      'status': 'received',
+    },
+  ),
   'login': () => const LoginScreen(),
   'register': () => const RegisterScreen(),
-  'options_popup': () => Builder(builder: (context) {
-        final r = fixture('r_napoli-wood-fire_${context.read<AppState>().lang}');
-        final p = Map<String, dynamic>.from((r['products'] as List).first);
-        return Scaffold(body: Center(child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Material(child: OptionsSheet(product: p, restaurant: r)),
-        )));
-      }),
-  'menu_drawer': () => const Scaffold(body: SizedBox(), endDrawer: AppMenu()),
+  'food_details': () => Builder(
+    builder: (context) {
+      final r = fixture('r_napoli-wood-fire_${context.read<AppState>().lang}');
+      final p = Map<String, dynamic>.from((r['products'] as List).first);
+      return FoodDetailsScreen(product: p, restaurant: r);
+    },
+  ),
+  'profile': () => const ProfileScreen(),
 };
 
 /// The test binding renders text with a stub font where every glyph is a 1em square,
 /// which makes text far wider than on a device. Load the app's real fonts instead.
 Future<void> loadAppFonts() async {
   final families = <String, List<String>>{};
-  for (final f in Directory('assets/fonts').listSync().whereType<File>().where((f) => f.path.endsWith('.ttf'))) {
-    final name = f.uri.pathSegments.last.split('-').first; // Poppins-400.ttf -> Poppins
+  for (final f in Directory(
+    'assets/fonts',
+  ).listSync().whereType<File>().where((f) => f.path.endsWith('.ttf'))) {
+    final name = f.uri.pathSegments.last.split('-').first; // Sen-400.ttf -> Sen
     families.putIfAbsent(name, () => []).add(f.path);
   }
   for (final e in families.entries) {
     final loader = FontLoader(e.key);
     for (final path in e.value) {
-      loader.addFont(Future.value(ByteData.sublistView(File(path).readAsBytesSync())));
+      loader.addFont(
+        Future.value(ByteData.sublistView(File(path).readAsBytesSync())),
+      );
     }
     await loader.load();
   }
@@ -116,7 +133,13 @@ void main() {
             if (['basket', 'checkout'].contains(entry.key)) {
               final r = fixture('r_napoli-wood-fire_$lang');
               for (final p in (r['products'] as List).take(3)) {
-                cart.add(product: Map<String, dynamic>.from(p), restaurantData: r, size: ((p['sizes'] as List?)?.isNotEmpty ?? false) ? p['sizes'][0]['name'] : null);
+                cart.add(
+                  product: Map<String, dynamic>.from(p),
+                  restaurantData: r,
+                  size: ((p['sizes'] as List?)?.isNotEmpty ?? false)
+                      ? p['sizes'][0]['name']
+                      : null,
+                );
               }
             }
 
@@ -124,25 +147,33 @@ void main() {
             final previous = FlutterError.onError;
             FlutterError.onError = (d) {
               // Append the source location of the offending widget (lib/... file:line).
-              final where = RegExp(r'lib/[\w/]+\.dart:\d+').firstMatch(d.toString())?.group(0);
-              errors.add('${d.exceptionAsString().split('\n').first}${where != null ? '  @ $where' : ''}');
+              final where = RegExp(
+                r'lib/[\w/]+\.dart:\d+',
+              ).firstMatch(d.toString())?.group(0);
+              errors.add(
+                '${d.exceptionAsString().split('\n').first}${where != null ? '  @ $where' : ''}',
+              );
             };
 
-            await tester.pumpWidget(MultiProvider(
-              providers: [ChangeNotifierProvider.value(value: app), ChangeNotifierProvider.value(value: cart)],
-              child: MaterialApp(theme: Ember.theme(), home: entry.value()),
-            ));
+            await tester.pumpWidget(
+              MultiProvider(
+                providers: [
+                  ChangeNotifierProvider.value(value: app),
+                  ChangeNotifierProvider.value(value: cart),
+                ],
+                child: MaterialApp(theme: Ember.theme(), home: entry.value()),
+              ),
+            );
             await tester.pump(const Duration(milliseconds: 300));
             await tester.pump(const Duration(milliseconds: 300));
-            if (entry.key == 'menu_drawer') {
-              final state = tester.state<ScaffoldState>(find.byType(Scaffold).first);
-              state.openEndDrawer();
-              await tester.pump(const Duration(milliseconds: 500));
-            }
             // Scroll through the whole page so every widget gets laid out
             final scrollables = find.byType(Scrollable);
             for (var i = 0; i < 14 && scrollables.evaluate().isNotEmpty; i++) {
-              await tester.drag(scrollables.first, const Offset(0, -500), warnIfMissed: false);
+              await tester.drag(
+                scrollables.first,
+                const Offset(0, -500),
+                warnIfMissed: false,
+              );
               await tester.pump(const Duration(milliseconds: 120));
             }
             FlutterError.onError = previous;
@@ -161,9 +192,13 @@ void main() {
       tester.view.resetDevicePixelRatio();
       tester.platformDispatcher.clearTextScaleFactorTestValue();
       if (problems.isNotEmpty) {
-        failures.add('${entry.key}:\n  ${problems.take(400).join('\n  ')}${problems.length > 12 ? '\n  ... ${problems.length - 12} more' : ''}');
+        failures.add(
+          '${entry.key}:\n  ${problems.take(400).join('\n  ')}${problems.length > 12 ? '\n  ... ${problems.length - 12} more' : ''}',
+        );
         // ignore: avoid_print
-        print('\n### ${entry.key} — ${problems.length} problem(s)\n  ${problems.take(400).join('\n  ')}');
+        print(
+          '\n### ${entry.key} — ${problems.length} problem(s)\n  ${problems.take(400).join('\n  ')}',
+        );
       }
       expect(problems, isEmpty, reason: problems.take(5).join('\n'));
     });

@@ -9,16 +9,19 @@ import 'home.dart';
 import 'restaurant.dart';
 import 'shell.dart';
 
-/// All restaurants (optionally filtered by cuisine / area, or only those with deals).
+/// Kit "Search": back + title + cart, search field, category keyword chips,
+/// then the restaurants — compact "Suggested Restaurants" rows while
+/// searching, big cards when browsing a category or the offers.
 class RestaurantsScreen extends StatefulWidget {
   final String? cuisine, area, title;
-  final bool offersOnly;
+  final bool offersOnly, search;
   const RestaurantsScreen({
     super.key,
     this.cuisine,
     this.area,
     this.title,
     this.offersOnly = false,
+    this.search = false,
   });
   @override
   State<RestaurantsScreen> createState() => _RestaurantsScreenState();
@@ -27,11 +30,12 @@ class RestaurantsScreen extends StatefulWidget {
 class _RestaurantsScreenState extends State<RestaurantsScreen> {
   final _q = TextEditingController();
   late String? _cuisine = widget.cuisine;
-  late String? _area = widget.area;
-  bool _openOnly = false;
+  late final String? _area = widget.area;
   Future<List<dynamic>>? _future;
   Future<Map<String, dynamic>>? _home;
   String _lang = '';
+
+  bool get _searching => widget.search || _q.text.trim().isNotEmpty;
 
   void _load() {
     _future = Api.instance.restaurants(
@@ -62,132 +66,44 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final t = app.t;
+    final title = widget.search
+        ? t('search')
+        : widget.offersOnly
+        ? t('offers_page_title')
+        : (widget.title ?? t('restaurants_page_title'));
     return EmberScaffold(
+      header: TopBar(
+        title: title,
+        trailing: CartButton(onTap: () => openBasket(context)),
+      ),
       onRefresh: () async => setState(_load),
       children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(22, 26, 22, 26),
-          decoration: BoxDecoration(
-            color: Ember.navy,
-            borderRadius: BorderRadius.circular(Ember.radius),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.offersOnly
-                    ? t('offers_page_title')
-                    : (widget.title ?? t('restaurants_page_title')),
-                style: Ember.text(
-                  28,
-                  weight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.offersOnly
-                    ? t('offers_page_sub')
-                    : t('restaurants_page_sub'),
-                style: Ember.text(14, color: Colors.white70),
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: _q,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => setState(_load),
-                decoration: InputDecoration(
-                  hintText: t('search_restaurants'),
-                  fillColor: Colors.white,
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.only(left: 14),
-                    child: Icon(Icons.search),
-                  ),
-                ),
-              ),
-              if (_area != null) ...[
-                const SizedBox(height: 12),
-                InputChip(
-                  label: Text(t('delivering_to', {'area': _area})),
-                  onDeleted: () => setState(() {
-                    _area = null;
-                    _load();
-                  }),
-                ),
-              ],
-            ],
-          ),
+        const SizedBox(height: 24),
+        SearchField(
+          hint: t('search_dishes'),
+          controller: _q,
+          autofocus: widget.search,
+          onChanged: (_) => setState(_load),
+          onSubmitted: (_) => setState(_load),
         ),
-        const SizedBox(height: 16),
-        FutureBuilder<Map<String, dynamic>>(
-          future: _home,
-          builder: (_, snap) {
-            final cuisines = List<Map<String, dynamic>>.from(
-              ((snap.data?['cuisines'] as List?) ?? []).map(
-                (e) => Map<String, dynamic>.from(e),
-              ),
-            );
-            return SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final c in [
-                    <String, dynamic>{'slug': null, 'name': t('filter_all')},
-                    ...cuisines,
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text('${c['name']}'),
-                        selected: _cuisine == c['slug'],
-                        onSelected: (_) => setState(() {
-                          _cuisine = c['slug'];
-                          _load();
-                        }),
-                        selectedColor: Ember.orange,
-                        showCheckmark: false,
-                        labelStyle: Ember.text(
-                          14,
-                          color: _cuisine == c['slug']
-                              ? Colors.white
-                              : Colors.black,
-                        ),
-                        shape: const StadiumBorder(
-                          side: BorderSide(color: Ember.gray),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-        SwitchListTile(
-          value: _openOnly,
-          onChanged: (v) => setState(() => _openOnly = v),
-          title: Text(t('open_now_only'), style: Ember.text(15)),
-          activeThumbColor: Ember.green,
-          contentPadding: EdgeInsets.zero,
-        ),
+        const SizedBox(height: 24),
+        Text(t('all_categories'), style: Ember.text(20, color: Ember.text1)),
+        const SizedBox(height: 12),
+        _keywords(),
+        const SizedBox(height: 32),
         FutureBuilder<List<dynamic>>(
           future: _future,
           builder: (context, snap) {
             if (snap.hasError) {
-              return errorBox(snap.error!, () => setState(_load));
-            }
-            if (!snap.hasData) {
-              return const Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(child: EmberLottie(EmberAnim.loader, size: 72)),
+              return ErrorState(
+                error: snap.error!,
+                onRetry: () => setState(_load),
               );
             }
-            var list = snap.data!
-                .map((e) => Map<String, dynamic>.from(e))
-                .toList();
-            if (_openOnly) {
-              list = list.where((r) => r['open_now'] == true).toList();
-            }
+            if (!snap.hasData) return const LoadingBox();
+            var list = List<Map<String, dynamic>>.from(
+              snap.data!.map((e) => Map<String, dynamic>.from(e)),
+            );
             if (widget.offersOnly) {
               list = list
                   .where((r) => numOf(r['discount_percent']) > 0)
@@ -201,20 +117,30 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
               );
             }
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    t('restaurants_found', {'count': list.length}),
-                    style: Ember.text(14, color: Colors.black54),
-                  ),
+                Text(
+                  _searching
+                      ? t('suggested_restaurants')
+                      : t('open_restaurants'),
+                  style: Ember.text(20, color: Ember.text1),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 for (final r in list)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
-                    child: RestaurantCard(r),
-                  ),
+                  _searching
+                      ? _SuggestionRow(
+                          r,
+                          onTap: () =>
+                              go(context, RestaurantScreen(slug: r['slug'])),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.only(bottom: 28),
+                          child: RestaurantCard(
+                            r,
+                            onTap: () =>
+                                go(context, RestaurantScreen(slug: r['slug'])),
+                          ),
+                        ),
               ],
             );
           },
@@ -222,185 +148,95 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
       ],
     );
   }
-}
 
-/// Wide restaurant card: cover photo with gradient, logo, name, cuisines; rating / time / min order.
-class RestaurantCard extends StatelessWidget {
-  final Map<String, dynamic> r;
-  const RestaurantCard(this.r, {super.key});
-  @override
-  Widget build(BuildContext context) {
-    final app = context.watch<AppState>();
-    final cuisines = (r['cuisines'] as List).map((c) => c['name']).join(' · ');
-    return Semantics(
-      container: true,
-      button: true,
-      label: '${r['name']}, $cuisines',
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: () => go(context, RestaurantScreen(slug: r['slug'])),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Ember.card,
-            borderRadius: BorderRadius.circular(Ember.radius),
-            boxShadow: Ember.softShadow,
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    NetImage(r['cover_url'] ?? r['hero_image_url']),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(gradient: Ember.dealGradient),
-                    ),
-                    if (numOf(r['discount_percent']) > 0)
-                      Positioned(
-                        right: 16,
-                        top: 0,
-                        child: DiscountBadge(
-                          r['discount_percent'],
-                          width: 70,
-                          height: 52,
-                          font: 16,
-                        ),
-                      ),
-                    if (r['open_now'] != true)
-                      Positioned(
-                        left: 14,
-                        top: 14,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(Ember.pill),
-                          ),
-                          child: Text(
-                            r['opens_at'] != null
-                                ? app.t('opens_at', {'time': r['opens_at']})
-                                : app.t('closed_now'),
-                            style: Ember.text(
-                              12,
-                              weight: FontWeight.w600,
-                              color: Ember.navy,
-                            ),
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 14,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: ClipOval(
-                              child: NetImage(
-                                r['logo_url'],
-                                width: 46,
-                                height: 46,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${r['name']}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Ember.text(
-                                    20,
-                                    weight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  cuisines,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Ember.text(
-                                    13,
-                                    weight: FontWeight.w500,
-                                    color: Ember.orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                // Wrap, not Row: on narrow phones / large fonts the min-order
-                // label moves to a second line instead of overflowing.
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 4,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Ember.orange,
-                          size: 18,
-                        ),
-                        Text(
-                          numOf(r['rating']).toStringAsFixed(1),
-                          style: Ember.text(13, weight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.schedule,
-                          size: 16,
-                          color: Colors.black54,
-                        ),
-                        Text(
-                          ' ${r['delivery_time']} ${app.t('min_short')}',
-                          style: Ember.text(13, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      app.t('min_order_short', {
-                        'amount': app.price(numOf(r['min_order'])),
-                      }),
-                      style: Ember.text(13, color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+  /// Category chips ("Recent Keywords" style); tapping one filters the list.
+  Widget _keywords() => FutureBuilder<Map<String, dynamic>>(
+    future: _home,
+    builder: (_, snap) {
+      final t = context.read<AppState>().t;
+      final cuisines = List<Map<String, dynamic>>.from(
+        ((snap.data?['cuisines'] as List?) ?? []).map(
+          (e) => Map<String, dynamic>.from(e),
+        ),
+      );
+      final items = [
+        <String, dynamic>{'slug': null, 'name': t('filter_all')},
+        ...cuisines,
+      ];
+      return SizedBox(
+        height: 46,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (_, i) => KitChip(
+            '${items[i]['name']}',
+            selected: _cuisine == items[i]['slug'],
+            onTap: () => setState(() {
+              _cuisine = items[i]['slug'];
+              _load();
+            }),
           ),
         ),
+      );
+    },
+  );
+}
+
+/// Kit "Suggested Restaurants" row: 60 x 50 photo, name, ☆ rating, divider.
+class _SuggestionRow extends StatelessWidget {
+  final Map<String, dynamic> r;
+  final VoidCallback onTap;
+  const _SuggestionRow(this.r, {required this.onTap});
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Ember.line)),
       ),
-    );
-  }
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: NetImage(
+              r['cover_url'] ?? r['logo_url'],
+              width: 60,
+              height: 50,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${r['name']}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Ember.text(16, color: Ember.navy),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.star_border_rounded,
+                      color: Ember.orange,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      numOf(r['rating']).toStringAsFixed(1),
+                      style: Ember.text(16, color: Ember.navy),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

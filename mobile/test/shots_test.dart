@@ -7,11 +7,15 @@ import 'dart:ui' as ui;
 import 'package:ember_app/core/api.dart';
 import 'package:ember_app/core/state.dart';
 import 'package:ember_app/core/theme.dart';
+import 'package:ember_app/screens/auth.dart';
 import 'package:ember_app/screens/basket.dart';
 import 'package:ember_app/screens/home.dart';
+import 'package:ember_app/screens/orders.dart';
 import 'package:ember_app/screens/restaurant.dart';
+import 'package:ember_app/screens/restaurants.dart';
 import 'package:ember_app/screens/shell.dart';
 import 'package:ember_app/widgets/common.dart';
+import 'package:ember_app/widgets/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -23,18 +27,32 @@ import 'layout_test.dart' show fixture, loadAppFonts, mockApi;
 
 const outDir = String.fromEnvironment('SHOTS_DIR');
 
+/// Kit frame heights (375 wide), so shots line up with the Figma screens.
 final shots = <String, (double, Widget Function())>{
-  'home': (7000, () => const HomeScreen()),
-  'restaurant': (8000, () => const RestaurantScreen(slug: 'napoli-wood-fire')),
-  'basket': (1800, () => const BasketScreen()),
-  'section_picker': (
-    1000,
+  'home': (812, () => const HomeScreen()),
+  'home_long': (2400, () => const HomeScreen()),
+  'search': (812, () => const RestaurantsScreen(search: true)),
+  'restaurant': (812, () => const RestaurantScreen(slug: 'napoli-wood-fire')),
+  'restaurant_long': (
+    2000,
     () => const RestaurantScreen(slug: 'napoli-wood-fire'),
   ),
-  'menu_drawer': (
-    1000,
-    () => const Scaffold(body: SizedBox(), endDrawer: AppMenu()),
+  'food_details': (
+    903,
+    () => Builder(
+      builder: (context) {
+        final r = fixture('r_napoli-wood-fire_en');
+        final p = Map<String, dynamic>.from((r['products'] as List).first);
+        return FoodDetailsScreen(product: p, restaurant: r);
+      },
+    ),
   ),
+  'basket': (812, () => const BasketScreen()),
+  'checkout': (812, () => const CheckoutScreen()),
+  'orders': (812, () => const OrdersScreen()),
+  'login': (812, () => const LoginScreen()),
+  'register': (812, () => const RegisterScreen()),
+  'profile': (996, () => const ProfileScreen()),
 };
 
 void main() {
@@ -66,16 +84,17 @@ void main() {
 
   for (final e in shots.entries) {
     testWidgets('shot ${e.key}', skip: outDir.isEmpty, (tester) async {
-      tester.view.physicalSize = Size(430, e.value.$1);
+      tester.view.physicalSize = Size(375, e.value.$1);
       tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 44);
       SharedPreferences.setMockInitialValues({'lang': 'en'});
       final app = AppState();
       final cart = CartState();
       await cart.init();
       await app.init();
-      if (e.key == 'basket') {
+      if (e.key == 'basket' || e.key == 'checkout') {
         final r = fixture('r_napoli-wood-fire_en');
-        for (final p in (r['products'] as List).take(4)) {
+        for (final p in (r['products'] as List).take(2)) {
           cart.add(
             product: Map<String, dynamic>.from(p),
             restaurantData: r,
@@ -107,20 +126,6 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 250)),
         );
         await tester.pump(const Duration(milliseconds: 300));
-      }
-      if (e.key == 'section_picker') {
-        await tester.ensureVisible(find.text('All dishes').first);
-        await tester.pump();
-        await tester.tap(find.text('All dishes').first);
-        for (var i = 0; i < 4; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
-      }
-      if (e.key == 'menu_drawer') {
-        tester
-            .state<ScaffoldState>(find.byType(Scaffold).first)
-            .openEndDrawer();
-        await tester.pump(const Duration(milliseconds: 600));
       }
       final boundary =
           key.currentContext!.findRenderObject()! as RenderRepaintBoundary;

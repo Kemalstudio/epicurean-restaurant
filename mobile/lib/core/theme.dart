@@ -1,61 +1,74 @@
 import 'package:flutter/material.dart';
 
-/// Colors and styles from the Figma kit "Food Delivery Website & App Design UI Kit".
+/// Colors and styles from the Figma kit "Food Delivery App (Community)":
+/// Sen type, orange #FF7622 accent, dark #181C2E / #121223, soft gray fields.
 class Ember {
-  static const orange = Color(0xFFFC8A06);
-  static const navy = Color(0xFF03081F);
-  static const green = Color(0xFF028643);
+  // Accent
+  static const orange = Color(0xFFFF7622);
+  static const orangeText = Color(0xFFFC6E2A); // "DELIVER TO" label
+  static const orangeSoft = Color(0xFFFFEBE4); // ingredient circles
+  static const orangeSize = Color(0xFFF58D1D); // chosen size
+  static const yellow = Color(0xFFFFD27C); // chosen category chip
+  static const peach = Color(0xFFFFC6AE); // profile avatar
+
+  // Dark
+  static const navy = Color(0xFF181C2E); // headings, cart button
+  static const dark = Color(0xFF121223); // login / cart backgrounds
+  static const darkCard = Color(0xFF2A2A39); // round buttons on dark
+  static const darkStep = Color(0xFF41414F); // +/- on the dark stepper
+
+  // Text
+  static const text1 = Color(0xFF32343E); // body / section titles
+  static const text2 = Color(0xFFA0A5BA); // secondary
+  static const text3 = Color(0xFF646982); // muted
+  static const address = Color(0xFF676767);
+
+  // Surfaces
+  static const field = Color(0xFFF0F5FA); // inputs, bottom panels
+  static const button = Color(0xFFECF0F4); // round light buttons
+  static const search = Color(0xFFF6F6F6); // home search
+  static const panel = Color(0xFFF6F8FA); // profile groups
+  static const line = Color(0xFFEBEBEB);
+  static const placeholder = Color(0xFF98A8B8); // image placeholder
+
+  // States
+  static const green = Color(0xFF059C6A);
+  static const red = Color(0xFFE04444);
+
+  // Legacy names still used by a few widgets
   static const gray = Color(0xFFD9D9D9);
-  static const grayDark = Color(0xFFA6A6A6);
-  static const light = Color(0xFFFAFAFA);
-  static const card = Color(0xFFFDFDFD);
-  static const section = Color(0xFFF6F6F6);
-  static const line = Color(0xFFEEEEEE);
-  static const red = Color(0xFFD03131);
-  static const chili = Color(0xFFE12B25);
-  static const pink = Color(0xFFFFB1B1);
+  static const grayDark = text2;
+  static const light = panel;
+  static const card = Colors.white;
+  static const section = field;
+  static const chili = red;
+  static const backdrop = Color(0xB3121223);
 
-  /// Thin gray header rules (kit #B3B3B3).
-  static const rule = Color(0xFFB3B3B3);
+  static const radius = 12.0; // image corners
+  static const fieldRadius = 10.0;
+  static const pill = 100.0;
 
-  /// Gray bands: categories (#D9D9D9 at 50%) and footer (#D9D9D9 at 60%) on white.
-  static const band = Color(0xFFECECEC);
-  static const footerBand = Color(0xFFE8E8E8);
+  /// Sen covers Latin and Turkmen letters; Russian falls back to Montserrat.
+  static const fontFallback = ['MontserratCyr'];
 
-  /// Popup backdrop (kit rgba(14,14,14,0.95)).
-  static const backdrop = Color(0xF20E0E0E);
-
-  static const radius = 12.0;
-  static const pill = 120.0;
-
-  /// Poppins for Latin; per-glyph fallback to Latin Extended (Turkmen) and Cyrillic (Russian).
-  static const fontFallback = ['PoppinsExt', 'MontserratCyr'];
-
+  /// Kit cards: very soft gray shadow.
   static const cardShadow = [
-    BoxShadow(color: Color(0x40000000), offset: Offset(5, 5), blurRadius: 34),
+    BoxShadow(color: Color(0x1F96969A), offset: Offset(0, 4), blurRadius: 30),
   ];
   static const softShadow = [
-    BoxShadow(color: Color(0x40000000), offset: Offset(0, 4), blurRadius: 4),
+    BoxShadow(color: Color(0x1496969A), offset: Offset(0, 4), blurRadius: 20),
   ];
   static const popupShadow = [
-    BoxShadow(color: Color(0x80000000), offset: Offset(20, 24), blurRadius: 44),
+    BoxShadow(color: Color(0x33000000), offset: Offset(0, 12), blurRadius: 40),
   ];
-
-  /// Photo overlay gradient used on deal / offer cards.
-  static const dealGradient = LinearGradient(
-    begin: Alignment.topRight,
-    end: Alignment.bottomLeft,
-    colors: [Color(0x00FFFFFF), Color(0x3003081F), Color(0xE303081F)],
-    stops: [0, 0.58, 1],
-  );
 
   static TextStyle text(
     double size, {
     FontWeight weight = FontWeight.w400,
-    Color color = Colors.black,
+    Color color = text1,
     double? height,
   }) => TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Sen',
     fontFamilyFallback: fontFallback,
     fontSize: size,
     fontWeight: weight,
@@ -66,7 +79,7 @@ class Ember {
   static ThemeData theme() {
     final base = ThemeData(
       useMaterial3: true,
-      fontFamily: 'Poppins',
+      fontFamily: 'Sen',
       colorScheme: ColorScheme.fromSeed(
         seedColor: orange,
         primary: orange,
@@ -74,36 +87,39 @@ class Ember {
         surface: Colors.white,
       ),
       scaffoldBackgroundColor: Colors.white,
+      splashFactory: InkRipple.splashFactory,
+    );
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(fieldRadius),
+      borderSide: BorderSide.none,
     );
     return base.copyWith(
       textTheme: base.textTheme.apply(
-        fontFamily: 'Poppins',
+        fontFamily: 'Sen',
         fontFamilyFallback: fontFallback,
-        bodyColor: Colors.black,
-        displayColor: Colors.black,
+        bodyColor: text1,
+        displayColor: text1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: section,
+        fillColor: field,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 18,
+          horizontal: 19,
+          vertical: 20,
         ),
-        hintStyle: text(15, color: Colors.black54),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(pill),
-          borderSide: const BorderSide(color: Color(0xFFCFCFCF)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(pill),
-          borderSide: const BorderSide(color: Color(0xFFCFCFCF)),
-        ),
+        hintStyle: text(14, color: text2),
+        border: fieldBorder,
+        enabledBorder: fieldBorder,
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(pill),
-          borderSide: const BorderSide(color: orange, width: 1.5),
+          borderRadius: BorderRadius.circular(fieldRadius),
+          borderSide: const BorderSide(color: orange),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(pill),
+          borderRadius: BorderRadius.circular(fieldRadius),
+          borderSide: const BorderSide(color: red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(fieldRadius),
           borderSide: const BorderSide(color: red),
         ),
       ),

@@ -6,16 +6,21 @@ import '../core/state.dart';
 import '../core/theme.dart';
 import '../widgets/animated.dart';
 import '../widgets/common.dart';
+import '../widgets/product.dart';
 import 'shell.dart';
 
 const _steps = [
   ('received', Icons.check_circle_outline),
   ('preparing', Icons.soup_kitchen_outlined),
   ('packaging', Icons.inventory_2_outlined),
-  ('out_for_delivery', Icons.delivery_dining),
+  ('out_for_delivery', Icons.delivery_dining_outlined),
   ('delivered', Icons.home_outlined),
 ];
 
+bool _isActive(Map<String, dynamic> o) =>
+    !['delivered', 'cancelled'].contains(o['status']);
+
+/// Order placed: success animation, number, estimated time, TRACK ORDER.
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
   const OrderSuccessScreen({super.key, required this.order});
@@ -24,137 +29,106 @@ class OrderSuccessScreen extends StatelessWidget {
     final app = context.watch<AppState>();
     final t = app.t;
     return EmberScaffold(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      bottom: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          8,
+          24,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: PrimaryButton(
+          t('track_order'),
+          onPressed: () {
+            Navigator.pop(context);
+            go(context, OrdersScreen(orderNumber: '${order['order_number']}'));
+          },
+        ),
+      ),
       children: [
+        const Center(
+          child: EmberLottie(EmberAnim.success, size: 200, repeat: false),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          t('order_confirmed'),
+          textAlign: TextAlign.center,
+          style: Ember.text(24, weight: FontWeight.w800, color: Ember.navy),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          t('order_confirmed_desc', {'number': order['order_number']}),
+          textAlign: TextAlign.center,
+          style: Ember.text(16, color: Ember.text2, height: 1.5),
+        ),
+        const SizedBox(height: 32),
         Container(
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9F9F9),
-            border: Border.all(color: Colors.black),
-            borderRadius: BorderRadius.circular(Ember.radius),
+            color: Ember.panel,
+            borderRadius: BorderRadius.circular(16),
           ),
-          clipBehavior: Clip.antiAlias,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                color: Ember.green,
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: const EmberLottie(
-                        EmberAnim.success,
-                        size: 110,
-                        repeat: false,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      t('order_confirmed'),
-                      style: Ember.text(
-                        26,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      t('order_confirmed_desc', {
-                        'number': order['order_number'],
-                      }),
-                      textAlign: TextAlign.center,
-                      style: Ember.text(15, color: Colors.white),
-                    ),
-                  ],
+              LabelValueRow(
+                label: Text(
+                  '${order['restaurant_name'] ?? ''}',
+                  style: Ember.text(14, color: Ember.text3),
+                ),
+                value: Text(
+                  shortPrice(app, numOf(order['total'])),
+                  style: Ember.text(
+                    16,
+                    weight: FontWeight.w700,
+                    color: Ember.navy,
+                  ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      '${order['restaurant_name']} · ${app.price(numOf(order['total']))}',
-                      textAlign: TextAlign.center,
-                      style: Ember.text(16, weight: FontWeight.w600),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time_rounded,
+                    color: Ember.orange,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      order['fulfillment'] == 'collection'
+                          ? t('ready_for_pickup')
+                          : t('estimated_delivery'),
+                      style: Ember.text(14, color: Ember.text3),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Ember.orange.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.schedule,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  order['fulfillment'] == 'collection'
-                                      ? t('ready_for_pickup')
-                                      : t('estimated_delivery'),
-                                  style: Ember.text(
-                                    14,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  '${order['estimated_delivery'] ?? t('delivery_time_value')}',
-                                  style: Ember.text(
-                                    22,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  ),
+                  Text(
+                    '${order['estimated_delivery'] ?? t('delivery_time_value')}',
+                    style: Ember.text(
+                      14,
+                      weight: FontWeight.w700,
+                      color: Ember.navy,
                     ),
-                    if (!app.isLoggedIn) ...[
-                      const SizedBox(height: 14),
-                      Text(
-                        t('guest_order_note'),
-                        style: Ember.text(13, color: Colors.black54),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    GreenButton(
-                      t('track_order'),
-                      height: 56,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        go(
-                          context,
-                          OrdersScreen(orderNumber: '${order['order_number']}'),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+        if (!app.isLoggedIn) ...[
+          const SizedBox(height: 16),
+          Text(
+            t('guest_order_note'),
+            textAlign: TextAlign.center,
+            style: Ember.text(13, color: Ember.text2),
+          ),
+        ],
       ],
     );
   }
 }
 
-/// Track order: guest search by number + phone, and the order history for signed-in users.
+/// Kit "My Orders": Ongoing / History tabs with order cards; guests track
+/// an order by its number and phone.
 class OrdersScreen extends StatefulWidget {
   final String? orderNumber;
   const OrdersScreen({super.key, this.orderNumber});
@@ -167,8 +141,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
   final _phone = TextEditingController();
   Map<String, dynamic>? _tracked;
   String? _error;
+  bool _busy = false;
   List<Map<String, dynamic>>? _mine;
   Timer? _timer;
+  int _tab = 0;
 
   @override
   void initState() {
@@ -200,7 +176,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> _track() async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
     try {
       final o = await Api.instance.track(
         _number.text.trim().toUpperCase(),
@@ -212,6 +191,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         _tracked = null;
         _error = e.message;
       });
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -219,152 +200,314 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final t = app.t;
-    final active =
-        _mine
-            ?.where((o) => !['delivered', 'cancelled'].contains(o['status']))
-            .toList() ??
-        [];
-    return EmberScaffold(
-      onRefresh: _loadMine,
-      children: [
-        Text(
-          t('nav_track_order'),
-          style: Ember.text(30, weight: FontWeight.w600),
-        ),
-        const SizedBox(height: 16),
-        if (active.isNotEmpty) ...[
-          OrderTrackerCard(order: active.first),
-          const SizedBox(height: 20),
-        ],
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Ember.gray,
-            borderRadius: BorderRadius.circular(Ember.radius),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                t('track_by_number'),
-                style: Ember.text(20, weight: FontWeight.w700),
-              ),
-              Text(
-                t('track_by_number_sub'),
-                style: Ember.text(13, color: Colors.black54),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _number,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  hintText: t('order_number_placeholder'),
-                  fillColor: Colors.white,
+    final list = (_mine ?? const <Map<String, dynamic>>[])
+        .where((o) => _tab == 0 ? _isActive(o) : !_isActive(o))
+        .toList();
+
+    Widget tab(int i, String label) => Expanded(
+      child: Semantics(
+        button: true,
+        selected: _tab == i,
+        child: InkWell(
+          onTap: () => setState(() => _tab = i),
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: _tab == i ? Ember.orange : const Color(0xFFCED7DF),
+                  width: _tab == i ? 2 : 1,
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _phone,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  hintText: '+993 6X XXXXXX',
-                  fillColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              OrangeButton(
-                t('track_order'),
-                onPressed: _track,
-                icon: Icons.search,
-              ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    _error!,
-                    style: Ember.text(
-                      14,
-                      weight: FontWeight.w600,
-                      color: Ember.red,
-                    ),
-                  ),
-                ),
-              if (_tracked != null) ...[
-                const SizedBox(height: 16),
-                OrderTrackerCard(order: _tracked!),
-              ],
-            ],
-          ),
-        ),
-        if (app.isLoggedIn) ...[
-          const SizedBox(height: 24),
-          Text(
-            t('order_history'),
-            style: Ember.text(22, weight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          if (_mine == null)
-            const Center(child: EmberLottie(EmberAnim.loader, size: 72)),
-          if (_mine != null && _mine!.isEmpty)
-            EmptyState(anim: EmberAnim.emptyBasket, title: t('no_orders')),
-          for (final o in _mine ?? const <Map<String, dynamic>>[])
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              color: Ember.card,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Ember.radius),
-                side: const BorderSide(color: Colors.black12),
-              ),
-              child: ExpansionTile(
-                title: Text(
-                  '${o['restaurant_name']}',
-                  style: Ember.text(16, weight: FontWeight.w600),
-                ),
-                subtitle: Text(
-                  '${o['order_number']} · ${app.price(numOf(o['total']))}',
-                  style: Ember.text(13, color: Colors.black54),
-                ),
-                trailing: _StatusPill(status: '${o['status']}'),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    child: OrderTrackerCard(order: o, compact: true),
-                  ),
-                ],
               ),
             ),
+            child: Text(
+              label,
+              style: Ember.text(
+                14,
+                weight: _tab == i ? FontWeight.w700 : FontWeight.w400,
+                color: _tab == i ? Ember.orange : const Color(0xFFA5A7B9),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return EmberScaffold(
+      header: Column(
+        children: [
+          TopBar(title: t('my_orders')),
+          if (app.isLoggedIn) ...[
+            const SizedBox(height: 12),
+            Row(children: [tab(0, t('ongoing')), tab(1, t('history'))]),
+          ],
+        ],
+      ),
+      onRefresh: _loadMine,
+      children: [
+        const SizedBox(height: 24),
+        if (app.isLoggedIn) ...[
+          if (_mine == null) const LoadingBox(),
+          if (_mine != null && list.isEmpty)
+            EmptyState(anim: EmberAnim.emptyBasket, title: t('no_orders')),
+          for (final o in list) _OrderCard(order: o),
+          const SizedBox(height: 16),
+        ],
+        // Track by number (guests, or orders placed without an account)
+        Text(t('track_by_number'), style: Ember.text(20, color: Ember.text1)),
+        const SizedBox(height: 6),
+        Text(
+          t('track_by_number_sub'),
+          style: Ember.text(14, color: Ember.text2),
+        ),
+        const SizedBox(height: 20),
+        KitField(
+          label: t('order_number'),
+          controller: _number,
+          hint: t('order_number_placeholder'),
+        ),
+        const SizedBox(height: 20),
+        KitField(
+          label: t('phone'),
+          controller: _phone,
+          hint: '+993 6X XX XX XX',
+          keyboard: TextInputType.phone,
+        ),
+        const SizedBox(height: 24),
+        PrimaryButton(t('track_order'), loading: _busy, onPressed: _track),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(_error!, style: Ember.text(14, color: Ember.red)),
+          ),
+        if (_tracked != null) ...[
+          const SizedBox(height: 24),
+          OrderTrackerCard(order: _tracked!),
         ],
       ],
     );
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  final String status;
-  const _StatusPill({required this.status});
+/// Kit order card: photo | name, price | items, #number; Track / Details.
+class _OrderCard extends StatelessWidget {
+  final Map<String, dynamic> order;
+  const _OrderCard({required this.order});
   @override
   Widget build(BuildContext context) {
-    final t = context.watch<AppState>().t;
-    final color = switch (status) {
-      'delivered' => Ember.line,
-      'cancelled' => Ember.pink,
-      'out_for_delivery' => Ember.green,
-      'received' => Ember.navy,
-      _ => Ember.orange,
-    };
-    final dark = ['delivered', 'cancelled'].contains(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(Ember.pill),
+    final app = context.watch<AppState>();
+    final t = app.t;
+    final o = order;
+    final items = (o['items'] as List?) ?? const [];
+    final count = items.fold<int>(
+      0,
+      (n, i) => n + numOf(i is Map ? i['quantity'] : 1, 1).toInt(),
+    );
+    final image = items
+        .whereType<Map>()
+        .map((i) => i['product_image'])
+        .firstWhere((x) => x != null, orElse: () => null);
+    final active = _isActive(o);
+
+    void showTracker() => showEmberPopup(
+      context,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
+        child: OrderTrackerCard(order: o),
       ),
-      child: Text(
-        t('status_$status'),
-        style: Ember.text(
-          12,
-          weight: FontWeight.w600,
-          color: dark ? Ember.navy : Colors.white,
+    );
+
+    return Container(
+      padding: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFEEF2F6))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: image == null
+                      ? Container(
+                          color: Ember.placeholder,
+                          child: const Icon(
+                            Icons.restaurant_rounded,
+                            color: Colors.white,
+                          ),
+                        )
+                      : NetImage(image),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${o['restaurant_name'] ?? ''}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Ember.text(
+                              14,
+                              weight: FontWeight.w700,
+                              color: Ember.navy,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '#${o['order_number']}',
+                          style: Ember.text(14, color: Ember.text3).copyWith(
+                            decoration: TextDecoration.underline,
+                            decorationColor: Ember.text3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          shortPrice(app, numOf(o['total'])),
+                          style: Ember.text(
+                            14,
+                            weight: FontWeight.w700,
+                            color: Ember.navy,
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 16,
+                          margin: const EdgeInsets.symmetric(horizontal: 14),
+                          color: const Color(0xFFCACCDA),
+                        ),
+                        Expanded(
+                          child: Text(
+                            t('items_count', {'count': count}),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Ember.text(12, color: Ember.text3),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      t('status_${o['status']}'),
+                      style: Ember.text(
+                        12,
+                        weight: FontWeight.w700,
+                        color: o['status'] == 'cancelled'
+                            ? Ember.red
+                            : active
+                            ? Ember.orange
+                            : Ember.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: SmallButton(
+                  active ? t('track_order') : t('details'),
+                  onPressed: showTracker,
+                ),
+              ),
+              const SizedBox(width: 50),
+              Expanded(
+                child: SmallButton(
+                  t('details'),
+                  outline: true,
+                  onPressed: () => _showItems(context),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showItems(BuildContext context) {
+    final app = context.read<AppState>();
+    final items = ((order['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .toList();
+    showEmberPopup(
+      context,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 40),
+              child: Text(
+                '#${order['order_number']}',
+                style: Ember.text(
+                  20,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            for (final i in items)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: LabelValueRow(
+                  label: Text(
+                    '${i['quantity'] ?? 1} × ${i['product_name'] ?? ''}${i['size'] == null ? '' : ' (${i['size']})'}',
+                    style: Ember.text(14, color: Ember.text3),
+                  ),
+                  value: Text(
+                    i['total_price'] == null
+                        ? ''
+                        : shortPrice(app, numOf(i['total_price'])),
+                    style: Ember.text(
+                      14,
+                      weight: FontWeight.w700,
+                      color: Ember.navy,
+                    ),
+                  ),
+                ),
+              ),
+            const Divider(height: 24, color: Ember.line),
+            LabelValueRow(
+              label: Text(
+                app.t('total'),
+                style: Ember.text(
+                  16,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ),
+              ),
+              value: Text(
+                shortPrice(app, numOf(order['total'])),
+                style: Ember.text(
+                  18,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -374,12 +517,7 @@ class _StatusPill extends StatelessWidget {
 /// Status timeline of one order.
 class OrderTrackerCard extends StatelessWidget {
   final Map<String, dynamic> order;
-  final bool compact;
-  const OrderTrackerCard({
-    super.key,
-    required this.order,
-    this.compact = false,
-  });
+  const OrderTrackerCard({super.key, required this.order});
   @override
   Widget build(BuildContext context) {
     final t = context.watch<AppState>().t;
@@ -389,9 +527,11 @@ class OrderTrackerCard extends StatelessWidget {
         children: [
           const Icon(Icons.cancel_outlined, color: Ember.red, size: 32),
           const SizedBox(width: 10),
-          Text(
-            t('order_was_cancelled'),
-            style: Ember.text(15, weight: FontWeight.w600, color: Ember.red),
+          Expanded(
+            child: Text(
+              t('order_was_cancelled'),
+              style: Ember.text(15, weight: FontWeight.w700, color: Ember.red),
+            ),
           ),
         ],
       );
@@ -399,102 +539,85 @@ class OrderTrackerCard extends StatelessWidget {
     final current = _steps
         .indexWhere((s) => s.$1 == status)
         .clamp(0, _steps.length - 1);
-    return Container(
-      padding: compact ? EdgeInsets.zero : const EdgeInsets.all(18),
-      decoration: compact
-          ? null
-          : BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(Ember.radius),
-              boxShadow: Ember.softShadow,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status == 'out_for_delivery' ||
+            status == 'preparing' ||
+            status == 'packaging')
+          Center(
+            child: EmberLottie(
+              status == 'out_for_delivery'
+                  ? EmberAnim.delivery
+                  : EmberAnim.loader,
+              size: 120,
             ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Live animation for orders that are being cooked or are on the way
-          if (status == 'out_for_delivery' ||
-              status == 'preparing' ||
-              status == 'packaging')
-            Center(
-              child: EmberLottie(
-                status == 'out_for_delivery'
-                    ? EmberAnim.delivery
-                    : EmberAnim.loader,
-                size: compact ? 90 : 130,
-              ),
-            ),
-          if (!compact) ...[
-            Text(
-              t('tracking_order', {'number': order['order_number']}),
-              style: Ember.text(17, weight: FontWeight.w700),
-            ),
-            Text(
-              '${order['restaurant_name'] ?? ''}',
-              style: Ember.text(13, color: Colors.black54),
-            ),
-            const SizedBox(height: 14),
-          ],
-          for (var i = 0; i < _steps.length; i++)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: i <= current ? Ember.orange : Ember.line,
-                        shape: BoxShape.circle,
-                        border: i == current
-                            ? Border.all(
-                                color: Ember.orange.withValues(alpha: 0.3),
-                                width: 4,
-                              )
-                            : null,
-                      ),
-                      child: Icon(
-                        _steps[i].$2,
-                        size: 20,
-                        color: i <= current ? Colors.white : Colors.black38,
-                      ),
+          ),
+        Text(
+          t('tracking_order', {'number': order['order_number']}),
+          style: Ember.text(17, weight: FontWeight.w700, color: Ember.navy),
+        ),
+        Text(
+          '${order['restaurant_name'] ?? ''}',
+          style: Ember.text(14, color: Ember.text2),
+        ),
+        const SizedBox(height: 16),
+        for (var i = 0; i < _steps.length; i++)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: i <= current ? Ember.orange : Ember.field,
+                      shape: BoxShape.circle,
                     ),
-                    if (i < _steps.length - 1)
-                      Container(
-                        width: 2,
-                        height: 22,
-                        color: i < current ? Ember.orange : Ember.line,
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t('status_${_steps[i].$1}'),
-                          style: Ember.text(
-                            14,
-                            weight: FontWeight.w600,
-                            color: i <= current ? Colors.black : Colors.black38,
-                          ),
-                        ),
-                        if (i == current)
-                          Text(
-                            t('step_${_steps[i].$1}_desc'),
-                            style: Ember.text(12, color: Colors.black54),
-                          ),
-                      ],
+                    child: Icon(
+                      _steps[i].$2,
+                      size: 19,
+                      color: i <= current ? Colors.white : Ember.text2,
                     ),
                   ),
+                  if (i < _steps.length - 1)
+                    Container(
+                      width: 2,
+                      height: 22,
+                      color: i < current ? Ember.orange : Ember.field,
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t('status_${_steps[i].$1}'),
+                        style: Ember.text(
+                          14,
+                          weight: i == current
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: i <= current ? Ember.navy : Ember.text2,
+                        ),
+                      ),
+                      if (i == current)
+                        Text(
+                          t('step_${_steps[i].$1}_desc'),
+                          style: Ember.text(12, color: Ember.text2),
+                        ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-        ],
-      ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

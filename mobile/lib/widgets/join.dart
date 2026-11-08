@@ -36,7 +36,7 @@ Future<void> showJoinForm(
             ),
             const SizedBox(height: 22),
             Builder(
-              builder: (ctx) => OrangeButton(
+              builder: (ctx) => PrimaryButton(
                 app.t('log_in'),
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -146,12 +146,12 @@ class _JoinFormState extends State<_JoinForm> {
       TextInputType? type,
       String? Function(String?)? validator,
     }) => Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: KitField(
+        label: label,
         controller: c,
-        keyboardType: type,
+        keyboard: type,
         validator: validator,
-        decoration: InputDecoration(labelText: label),
       ),
     );
     return SingleChildScrollView(
@@ -161,9 +161,16 @@ class _JoinFormState extends State<_JoinForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              t(widget.partner ? 'partner_form_title' : 'rider_form_title'),
-              style: Ember.text(22, weight: FontWeight.w700),
+            Padding(
+              padding: const EdgeInsets.only(right: 40),
+              child: Text(
+                t(widget.partner ? 'partner_form_title' : 'rider_form_title'),
+                style: Ember.text(
+                  20,
+                  weight: FontWeight.w700,
+                  color: Ember.navy,
+                ),
+              ),
             ),
             const SizedBox(height: 18),
             if (widget.partner)
@@ -227,7 +234,7 @@ class _JoinFormState extends State<_JoinForm> {
               const SizedBox(height: 16),
             ],
             const SizedBox(height: 6),
-            OrangeButton(
+            PrimaryButton(
               _sending ? t('sending') : t('send_application'),
               onPressed: _sending ? null : _submit,
             ),

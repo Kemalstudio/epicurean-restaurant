@@ -66,35 +66,22 @@ flutter:
   assets:
     - assets/brand/
     - assets/lottie/
-    - assets/kit/
 
-  # Poppins (Latin), PoppinsExt (Latin Extended: Turkmen letters), MontserratCyr (Cyrillic for Russian).
-  # Converted from the website's self-hosted fonts (SIL Open Font License).
+  # Sen (Latin + Turkmen letters, from the Figma kit) and MontserratCyr (Cyrillic for Russian).
+  # All under the SIL Open Font License.
   fonts:
-    - family: Poppins
+    - family: Sen
       fonts:
-        - asset: assets/fonts/Poppins-300.ttf
-          weight: 300
-        - asset: assets/fonts/Poppins-400.ttf
+        - asset: assets/fonts/Sen-400.ttf
           weight: 400
-        - asset: assets/fonts/Poppins-500.ttf
+        - asset: assets/fonts/Sen-500.ttf
           weight: 500
-        - asset: assets/fonts/Poppins-600.ttf
+        - asset: assets/fonts/Sen-600.ttf
           weight: 600
-        - asset: assets/fonts/Poppins-700.ttf
+        - asset: assets/fonts/Sen-700.ttf
           weight: 700
-    - family: PoppinsExt
-      fonts:
-        - asset: assets/fonts/PoppinsExt-300.ttf
-          weight: 300
-        - asset: assets/fonts/PoppinsExt-400.ttf
-          weight: 400
-        - asset: assets/fonts/PoppinsExt-500.ttf
-          weight: 500
-        - asset: assets/fonts/PoppinsExt-600.ttf
-          weight: 600
-        - asset: assets/fonts/PoppinsExt-700.ttf
-          weight: 700
+        - asset: assets/fonts/Sen-800.ttf
+          weight: 800
     - family: MontserratCyr
       fonts:
         - asset: assets/fonts/MontserratCyr-400.ttf

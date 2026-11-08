@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -42,7 +40,7 @@ class LabelValueRow extends StatelessWidget {
   );
 }
 
-/// Network photo with gray placeholder (kit placeholder color).
+/// Network photo with the kit's blue-gray placeholder.
 class NetImage extends StatelessWidget {
   /// Widget tests have no network or cache directory: show placeholders instead.
   static bool disableForTests = false;
@@ -67,7 +65,7 @@ class NetImage extends StatelessWidget {
     final placeholder = Container(
       width: width,
       height: height,
-      color: Ember.gray,
+      color: Ember.placeholder,
     );
     final test = builderForTests;
     if (test != null && (url ?? '').isNotEmpty) {
@@ -97,410 +95,446 @@ class EmberLogo extends StatelessWidget {
   );
 }
 
-//// Icon or picture exported from the Figma kit (assets/kit/).
-class KitImage extends StatelessWidget {
-  final String name;
-  final double? size, width, height;
-  final BoxFit fit;
-  final Color? color;
-  const KitImage(
-    this.name, {
+/// Kit round button (45 px): light gray with a dark icon, or the dark
+/// variant used on the cart / login screens.
+class RoundButton extends StatelessWidget {
+  final Widget icon;
+  final VoidCallback? onTap;
+  final String tooltip;
+  final double size;
+  final Color color;
+  const RoundButton({
     super.key,
-    this.size,
-    this.width,
-    this.height,
-    this.fit = BoxFit.contain,
-    this.color,
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+    this.size = 45,
+    this.color = Ember.button,
   });
   @override
-  Widget build(BuildContext context) => Image.asset(
-    'assets/kit/${name.contains('.') ? name : '$name.png'}',
-    width: width ?? size,
-    height: height ?? size,
-    fit: fit,
-    color: color,
-    filterQuality: FilterQuality.medium,
-    excludeFromSemantics: true,
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Material(
+      color: color,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Center(child: icon),
+        ),
+      ),
+    ),
   );
 }
 
-/// Kit header (430 wide): logo | menu icon, the orange account block and
-/// green basket block (77 high), then the address line.
-class EmberHeader extends StatelessWidget {
-  final VoidCallback onMenu, onAccount, onBasket, onAddress;
-  const EmberHeader({
+/// Round "<" button. [dark] is for the dark cart / login screens.
+class BackButtonKit extends StatelessWidget {
+  final bool dark, white;
+  final VoidCallback? onTap;
+  const BackButtonKit({
     super.key,
-    required this.onMenu,
-    required this.onAccount,
-    required this.onBasket,
-    required this.onAddress,
+    this.dark = false,
+    this.white = false,
+    this.onTap,
   });
+  @override
+  Widget build(BuildContext context) => RoundButton(
+    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+    color: dark
+        ? Ember.darkCard
+        : white
+        ? Colors.white
+        : Ember.button,
+    onTap: onTap ?? () => Navigator.maybePop(context),
+    icon: Icon(
+      Icons.chevron_left_rounded,
+      size: 26,
+      color: dark ? Colors.white : Ember.navy,
+    ),
+  );
+}
+
+/// Kit menu glyph: three left-aligned lines, the middle one longest.
+class MenuGlyph extends StatelessWidget {
+  const MenuGlyph({super.key});
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 18,
+    height: 14,
+    child: CustomPaint(painter: _MenuGlyphPainter()),
+  );
+}
+
+class _MenuGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Ember.navy
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(1, 1), const Offset(9, 1), p);
+    canvas.drawLine(const Offset(1, 7), const Offset(17, 7), p);
+    canvas.drawLine(const Offset(1, 13), const Offset(12, 13), p);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Kit dark cart button with the orange count badge.
+class CartButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const CartButton({super.key, required this.onTap});
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final cart = context.watch<CartState>();
-    final name = app.user?['name'] ?? app.user?['email'];
-    return Column(
-      children: [
-        Container(
-          height: 92,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Ember.rule)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Center(child: EmberLogo()),
-              ),
-              const Spacer(),
-              Container(
-                width: 107,
-                decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: Ember.rule)),
+    final count = context.watch<CartState>().count;
+    return Semantics(
+      button: true,
+      label: '${app.t('open_basket')}: $count',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: 45,
+        height: 49,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: 4,
+              left: 0,
+              child: RoundButton(
+                tooltip: app.t('open_basket'),
+                color: Ember.navy,
+                onTap: onTap,
+                icon: const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.white,
+                  size: 21,
                 ),
-                child: Semantics(
-                  button: true,
-                  label: app.t('open_menu'),
-                  child: InkWell(
-                    onTap: onMenu,
-                    child: const Center(child: KitImage('menu', size: 65)),
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: BounceOnChange(
+                    value: count,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 25),
+                      height: 25,
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Ember.orange,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: Ember.text(
+                          16,
+                          weight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
-        SizedBox(
-          height: 77,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                flex: 210,
-                child: Semantics(
-                  container: true,
-                  child: MergeSemantics(
-                    child: Material(
-                      color: Ember.orange,
-                      child: InkWell(
-                        onTap: onAccount,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 30, right: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                alignment: Alignment.center,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: name == null
-                                    ? const Icon(
-                                        Icons.person,
-                                        color: Ember.orange,
-                                        size: 28,
-                                      )
-                                    : Text(
-                                        '$name'.characters.first.toUpperCase(),
-                                        style: Ember.text(
-                                          18,
-                                          weight: FontWeight.w700,
-                                          color: Ember.orange,
-                                        ),
-                                      ),
-                              ),
-                              const SizedBox(width: 11),
-                              Expanded(
-                                child: Text(
-                                  name == null
-                                      ? app.t('login_signup')
-                                      : '$name',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Ember.text(
-                                    14,
-                                    weight: FontWeight.w600,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ),
-                            ],
+      ),
+    );
+  }
+}
+
+/// Kit screen top bar: back button, 17pt title, optional trailing widget.
+class TopBar extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+  final bool dark;
+  final VoidCallback? onBack;
+  final bool showBack;
+  const TopBar({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.dark = false,
+    this.onBack,
+    this.showBack = true,
+  });
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+    child: SizedBox(
+      height: 49,
+      child: Row(
+        children: [
+          if (showBack) ...[
+            BackButtonKit(dark: dark, onTap: onBack),
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Ember.text(17, color: dark ? Colors.white : Ember.navy),
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    ),
+  );
+}
+
+/// Kit search field (62 high, #F6F6F6, radius 10, gray magnifier).
+class SearchField extends StatelessWidget {
+  final String hint;
+  final TextEditingController? controller;
+  final ValueChanged<String>? onChanged, onSubmitted;
+  final VoidCallback? onTap;
+  final bool autofocus;
+  const SearchField({
+    super.key,
+    required this.hint,
+    this.controller,
+    this.onChanged,
+    this.onSubmitted,
+    this.onTap,
+    this.autofocus = false,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final readOnly = onTap != null;
+    final ctrl = controller;
+    return SizedBox(
+      height: 62,
+      child: TextField(
+        controller: ctrl,
+        readOnly: readOnly,
+        onTap: onTap,
+        autofocus: autofocus,
+        onChanged: onChanged,
+        onSubmitted: onSubmitted,
+        textInputAction: TextInputAction.search,
+        textAlignVertical: TextAlignVertical.center,
+        style: Ember.text(14, color: Ember.navy),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: Ember.text(14, color: Ember.address),
+          fillColor: Ember.search,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.only(left: 18, right: 10),
+            child: Icon(Icons.search_rounded, color: Ember.text2, size: 22),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 50),
+          suffixIcon: ctrl == null || readOnly
+              ? null
+              : ValueListenableBuilder(
+                  valueListenable: ctrl,
+                  builder: (_, v, _) => v.text.isEmpty
+                      ? const SizedBox.shrink()
+                      : IconButton(
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).deleteButtonTooltip,
+                          onPressed: () {
+                            ctrl.clear();
+                            onChanged?.call('');
+                          },
+                          icon: const Icon(
+                            Icons.cancel,
+                            color: Color(0xFFCDCDCF),
+                            size: 20,
                           ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
-              ),
-              Expanded(
-                flex: 220,
-                child: Semantics(
-                  container: true,
-                  button: true,
-                  label: '${app.t('open_basket')}: ${app.price(cart.total)}',
-                  excludeSemantics: true,
-                  child: Material(
-                    color: Ember.green,
-                    child: InkWell(
-                      onTap: onBasket,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 37, right: 8),
-                        child: Row(
-                          children: [
-                            BounceOnChange(
-                              value: cart.count,
-                              child: Badge(
-                                isLabelVisible: cart.count > 0,
-                                label: Text('${cart.count}'),
-                                backgroundColor: Ember.orange,
-                                child: const KitImage('basket', size: 45),
-                              ),
-                            ),
-                            const SizedBox(width: 17),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  app.price(cart.total),
-                                  style: Ember.text(
-                                    16,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "All Categories ............ See All >" row.
+class SectionHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback? onSeeAll;
+  const SectionHeader(this.title, {super.key, this.onSeeAll});
+  @override
+  Widget build(BuildContext context) {
+    final app = context.read<AppState>();
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Ember.text(20, color: Ember.text1),
           ),
         ),
-        Semantics(
-          container: true,
-          button: true,
-          label: app.address.isEmpty
-              ? app.t('no_address')
-              : '${app.t('change_location')}: ${app.address}',
-          excludeSemantics: true,
-          child: InkWell(
-            onTap: onAddress,
+        if (onSeeAll != null)
+          InkWell(
+            onTap: onSeeAll,
+            borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 11, 34, 0),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const KitImage('location', size: 25),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 190),
-                      child: Text(
-                        app.address.isEmpty ? app.t('no_address') : app.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Ember.text(14),
-                      ),
-                    ),
+                  Text(
+                    app.t('see_all'),
+                    style: Ember.text(16, color: const Color(0xFF333333)),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Ember.text2,
+                    size: 20,
                   ),
                 ],
               ),
             ),
           ),
-        ),
       ],
     );
   }
 }
 
-/// Navy discount badge with rounded bottom corners (kit 46 x 38, radius 4).
-class DiscountBadge extends StatelessWidget {
-  final num percent;
-  final double width, height, font, radius;
-  const DiscountBadge(
-    this.percent, {
-    super.key,
-    this.width = 46,
-    this.height = 38,
-    this.font = 15,
-    this.radius = 4,
-  });
-  @override
-  Widget build(BuildContext context) => Container(
-    constraints: BoxConstraints(minWidth: width),
-    height: height,
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    decoration: BoxDecoration(
-      color: Ember.navy,
-      borderRadius: BorderRadius.vertical(bottom: Radius.circular(radius)),
-    ),
-    // widthFactor 1: as wide as the text (or [width]), never the whole row
-    child: Center(
-      widthFactor: 1,
-      child: Text(
-        '-$percent%',
-        style: Ember.text(font, weight: FontWeight.w700, color: Colors.white),
-      ),
-    ),
-  );
-}
-
-/// Kit photo gradient (clear -> navy) used on deal, partner and offer cards.
-/// [degrees] is the CSS linear-gradient angle from the design.
-LinearGradient kitPhotoGradient(double degrees) {
-  final r = (degrees - 90) * math.pi / 180;
-  final dx = math.cos(r), dy = math.sin(r);
-  return LinearGradient(
-    begin: Alignment(-dx, -dy),
-    end: Alignment(dx, dy),
-    colors: const [Color(0x00FFFFFF), Color(0x3003081F), Color(0xE303081F)],
-    stops: const [0.0094, 0.5169, 0.879],
-  );
-}
-
-/// Mobile deal card (kit: 150 x 150 photo, "Restaurant" + bold name below).
-class DealCardSmall extends StatelessWidget {
-  final Map<String, dynamic> r;
-  final VoidCallback onTap;
-  const DealCardSmall(this.r, {super.key, required this.onTap});
+/// Kit info row: ☆ 4.7   🚚 Free   🕑 20 min (orange line icons).
+class MetaRow extends StatelessWidget {
+  final num? rating;
+  final String? fee, time;
+  final double gap;
+  const MetaRow({super.key, this.rating, this.fee, this.time, this.gap = 24});
   @override
   Widget build(BuildContext context) {
-    final app = context.read<AppState>();
-    return Semantics(
-      container: true,
-      button: true,
-      label: '${r['name']}, -${r['discount_percent']}%',
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: SizedBox(
-          width: 150,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(Ember.radius),
-                child: SizedBox(
-                  height: 150,
-                  width: 150,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      NetImage(r['cover_url'] ?? r['hero_image_url']),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: kitPhotoGradient(245.7),
-                        ),
-                      ),
-                      if (numOf(r['discount_percent']) > 0)
-                        Positioned(
-                          right: 17,
-                          top: 0,
-                          child: DiscountBadge(r['discount_percent']),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      app.t('restaurant_word'),
-                      style: Ember.text(
-                        13,
-                        weight: FontWeight.w500,
-                        color: Ember.orange,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${r['name']}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Ember.text(
-                        14,
-                        weight: FontWeight.w700,
-                        color: Ember.navy,
-                        height: 17 / 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Popular category tile (kit 189 x 211): photo + navy caption,
-/// bold orange title and white count.
-class CuisineTile extends StatelessWidget {
-  final Map<String, dynamic> c;
-  final VoidCallback onTap;
-  const CuisineTile(this.c, {super.key, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    final app = context.read<AppState>();
-    return Semantics(
-      container: true,
-      button: true,
-      label:
-          '${c['name']}, ${app.t('restaurants_count', {'count': c['restaurant_count']})}',
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(Ember.radius),
-          child: Container(
+    Widget item(IconData icon, String text, {bool bold = false}) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Ember.orange, size: 21),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: Ember.text(
+            bold ? 16 : 14,
+            weight: bold ? FontWeight.w700 : FontWeight.w400,
             color: Ember.navy,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: NetImage(c['image_url'])),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 8, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${c['name']}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Ember.text(
-                          13,
-                          weight: FontWeight.w700,
-                          color: Ember.orange,
-                          height: 1.3,
-                        ),
-                      ),
-                      Text(
-                        app.t('restaurants_count', {
-                          'count': c['restaurant_count'],
-                        }),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Ember.text(13, color: Colors.white, height: 1.3),
-                      ),
-                    ],
-                  ),
+          ),
+        ),
+      ],
+    );
+    return Wrap(
+      spacing: gap,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (rating != null)
+          item(
+            Icons.star_border_rounded,
+            rating!.toStringAsFixed(1),
+            bold: true,
+          ),
+        if (fee != null) item(Icons.local_shipping_outlined, fee!),
+        if (time != null) item(Icons.access_time_rounded, time!),
+      ],
+    );
+  }
+}
+
+/// Kit primary button: orange, 62 high, radius 12, bold uppercase label.
+class PrimaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool loading;
+  final double height;
+  const PrimaryButton(
+    this.label, {
+    super.key,
+    this.onPressed,
+    this.loading = false,
+    this.height = 62,
+  });
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: height,
+    width: double.infinity,
+    child: FilledButton(
+      onPressed: loading ? null : onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: Ember.orange,
+        disabledBackgroundColor: Ember.orange.withValues(alpha: 0.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+      ),
+      child: loading
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              label.toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: Ember.text(
+                14,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+    ),
+  );
+}
+
+/// Small kit buttons from "My Orders": filled orange or orange outline.
+class SmallButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool outline;
+  const SmallButton(
+    this.label, {
+    super.key,
+    this.onPressed,
+    this.outline = false,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(6),
+      side: const BorderSide(color: Ember.orange),
+    );
+    return SizedBox(
+      height: 38,
+      child: Material(
+        color: outline ? Colors.white : Ember.orange,
+        shape: shape,
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: shape,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Ember.text(
+                  12,
+                  weight: FontWeight.w700,
+                  color: outline ? Ember.orange : Colors.white,
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -509,334 +543,198 @@ class CuisineTile extends StatelessWidget {
   }
 }
 
-/// Popular restaurant tile (kit 122 x 156): logo + orange caption.
-class RestaurantTile extends StatelessWidget {
-  final Map<String, dynamic> r;
-  final VoidCallback onTap;
-  final double width;
-  const RestaurantTile(
-    this.r, {
-    super.key,
-    required this.onTap,
-    this.width = 122,
-  });
+/// Kit pill chip: white with a light outline, orange when chosen.
+class KitChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+  const KitChip(this.label, {super.key, this.selected = false, this.onTap});
   @override
-  Widget build(BuildContext context) => Semantics(
-    container: true,
-    button: true,
-    label: '${r['name']}',
-    excludeSemantics: true,
-    child: GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: width,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(Ember.radius),
+  Widget build(BuildContext context) {
+    final shape = StadiumBorder(
+      side: BorderSide(
+        color: selected ? Ember.orange : const Color(0xFFEDEDED),
+        width: 2,
+      ),
+    );
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? Ember.orange : Colors.white,
+        shape: shape,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: shape,
           child: Container(
-            color: Ember.orange,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 104,
-                  width: double.infinity,
-                  child: NetImage(r['logo_url']),
-                ),
-                Expanded(
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text(
-                      '${r['name']}',
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Ember.text(
-                        13,
-                        weight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 16 / 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: Ember.text(
+                16,
+                color: selected ? Colors.white : Ember.navy,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-/// Horizontal row of [RestaurantTile]s with a bold title (kit "Popular Restaurants").
-class RestaurantStrip extends StatelessWidget {
-  final String title;
-  final List<Map<String, dynamic>> items;
-  final void Function(Map<String, dynamic>) onTap;
-  const RestaurantStrip({
+/// Uppercase field label + kit gray field (login, checkout, address forms).
+class KitField extends StatelessWidget {
+  final String label;
+  final TextEditingController? controller;
+  final String? hint;
+  final bool obscure;
+  final TextInputType? keyboard;
+  final String? Function(String?)? validator;
+  final int maxLines;
+  final Widget? suffix;
+  final Iterable<String>? autofill;
+  final TextInputAction? action;
+  final ValueChanged<String>? onSubmitted;
+  const KitField({
     super.key,
-    required this.title,
-    required this.items,
-    required this.onTap,
+    required this.label,
+    this.controller,
+    this.hint,
+    this.obscure = false,
+    this.keyboard,
+    this.validator,
+    this.maxLines = 1,
+    this.suffix,
+    this.autofill,
+    this.action,
+    this.onSubmitted,
   });
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 21),
-        child: Text(title, style: Ember.text(16, weight: FontWeight.w700)),
-      ),
-      const SizedBox(height: 29),
-      SizedBox(
-        height: 156,
-        child: ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 21),
-          scrollDirection: Axis.horizontal,
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 10),
-          itemBuilder: (_, i) =>
-              RestaurantTile(items[i], onTap: () => onTap(items[i])),
-        ),
+      Text(label.toUpperCase(), style: Ember.text(13, color: Ember.text1)),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        keyboardType: keyboard,
+        validator: validator,
+        maxLines: obscure ? 1 : maxLines,
+        autofillHints: autofill,
+        textInputAction: action,
+        onFieldSubmitted: onSubmitted,
+        style: Ember.text(14, color: Ember.navy),
+        decoration: InputDecoration(hintText: hint, suffixIcon: suffix),
       ),
     ],
   );
 }
 
-class SectionTitle extends StatelessWidget {
-  final String text;
-  final Widget? trailing;
-  const SectionTitle(this.text, {super.key, this.trailing});
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(text, style: Ember.text(16, weight: FontWeight.w700)),
-        ),
-        ?trailing,
-      ],
-    ),
-  );
-}
-
-/// Orange pill button.
-class OrangeButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final double height;
-  final IconData? icon;
-  const OrangeButton(
-    this.label, {
+/// Kit quantity stepper: dark pill with round − / + buttons.
+class QtyStepper extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+  final int min;
+  final bool compact;
+  const QtyStepper({
     super.key,
-    this.onPressed,
-    this.height = 52,
-    this.icon,
+    required this.value,
+    required this.onChanged,
+    this.min = 1,
+    this.compact = false,
   });
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: height,
-    child: FilledButton.icon(
-      onPressed: onPressed,
-      icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 20),
-      label: Text(
-        label,
-        style: Ember.text(16, weight: FontWeight.w600, color: Colors.white),
-      ),
-      style: FilledButton.styleFrom(
-        backgroundColor: Ember.orange,
-        shape: const StadiumBorder(),
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-      ),
-    ),
-  );
-}
-
-/// Kit green action button (342 x 70, radius 8) with the white round arrow
-/// on the left — "Checkout!" / "Next Step".
-class GreenButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final double height;
-  const GreenButton(this.label, {super.key, this.onPressed, this.height = 70});
-  @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-      side: const BorderSide(color: Color(0x1C000000)),
-    );
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: Material(
-        color: Ember.green,
-        shape: shape,
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: shape,
-          child: SizedBox(
-            height: height,
-            child: Row(
-              children: [
-                const SizedBox(width: 20),
-                KitImage('forward_white', size: height > 60 ? 35 : 28),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 35, left: 8),
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Ember.text(
-                        height > 60 ? 24 : 18,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    final app = context.read<AppState>();
+    final b = compact ? 22.0 : 24.0;
+    Widget btn(IconData icon, VoidCallback? onTap, String tip) => Tooltip(
+      message: tip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 22,
+        child: Container(
+          width: b,
+          height: b,
+          decoration: BoxDecoration(
+            color: Ember.darkStep.withValues(alpha: onTap == null ? 0.5 : 1),
+            shape: BoxShape.circle,
           ),
+          child: Icon(icon, size: compact ? 14 : 16, color: Colors.white),
         ),
       ),
+    );
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        btn(
+          Icons.remove_rounded,
+          value > min ? () => onChanged(value - 1) : null,
+          app.t('decrease_quantity'),
+        ),
+        SizedBox(
+          width: compact ? 34 : 44,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: Ember.text(16, weight: FontWeight.w700, color: Colors.white),
+          ),
+        ),
+        btn(
+          Icons.add_rounded,
+          () => onChanged(value + 1),
+          app.t('increase_quantity'),
+        ),
+      ],
+    );
+    if (compact) return row;
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Ember.dark,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: row,
     );
   }
 }
 
-/// Kit "Total to pay  £127.90" bar: 70 high, orange at 80%, radius 8.
-class TotalToPay extends StatelessWidget {
-  final String label, amount;
-  const TotalToPay({super.key, required this.label, required this.amount});
-  @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 70),
-    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-    decoration: BoxDecoration(
-      color: const Color(0xCCFC8A06),
-      border: Border.all(color: const Color(0x1C000000)),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: LabelValueRow(
-      label: Text(
-        label,
-        style: Ember.text(20, weight: FontWeight.w600, color: Colors.white),
-      ),
-      value: Text(
-        amount,
-        style: Ember.text(36, weight: FontWeight.w600, color: Colors.white),
-      ),
-    ),
-  );
-}
-
-/// Kit gray pill (#F6F6F6, 52 high) with a faded round arrow on the right:
-/// "Sort by Pricing", "Choose your free item..", "Apply Coupon Code here".
-class KitPill extends StatelessWidget {
-  final String label;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-  final double height;
-  final EdgeInsets padding;
-  const KitPill(
-    this.label, {
-    super.key,
-    this.onTap,
-    this.trailing,
-    this.height = 52,
-    this.padding = const EdgeInsets.only(left: 29, right: 12),
-  });
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Ember.section,
-    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFCFCFCF))),
-    child: InkWell(
-      onTap: onTap,
-      customBorder: const StadiumBorder(),
-      child: Container(
-        constraints: BoxConstraints(minHeight: height),
-        padding: padding,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Ember.text(16),
-              ),
-            ),
-            const SizedBox(width: 10),
-            trailing ?? const KitDownArrow(),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// The kit's faded round "forward" arrow turned to point down (30 x 30, 40%).
-class KitDownArrow extends StatelessWidget {
-  final double size;
-  const KitDownArrow({super.key, this.size = 30});
-  @override
-  Widget build(BuildContext context) => Opacity(
-    opacity: 0.4,
-    child: RotatedBox(quarterTurns: 1, child: KitImage('forward', size: size)),
-  );
-}
-
-/// Kit popup: white card (radius 12) over a near-black backdrop, with the
-/// orange round close button sticking out of the top-right corner.
+/// Kit popup: white sheet (radius 20) over the dark backdrop, close button
+/// in the corner.
 Future<T?> showEmberPopup<T>(
   BuildContext context, {
   required Widget child,
-  double inset = 19,
-  bool closeInside = false,
+  double inset = 24,
   bool showClose = true,
 }) {
   return showDialog<T>(
     context: context,
     barrierColor: Ember.backdrop,
     builder: (ctx) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.fromLTRB(inset, 56, inset, 32),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      insetPadding: EdgeInsets.symmetric(horizontal: inset, vertical: 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
-        clipBehavior: Clip.none,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(Ember.radius),
-              boxShadow: Ember.popupShadow,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: child,
-          ),
+          child,
           if (showClose)
             Positioned(
-              right: closeInside ? 22 : -14,
-              top: -35,
-              child: Semantics(
-                button: true,
-                label: MaterialLocalizations.of(ctx).closeButtonLabel,
-                child: Material(
-                  color: Ember.orange,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => Navigator.of(ctx).pop(),
-                    child: SizedBox(
-                      width: closeInside ? 70 : 80,
-                      height: closeInside ? 70 : 80,
-                      child: Center(
-                        child: KitImage('close', size: closeInside ? 33 : 38),
-                      ),
-                    ),
-                  ),
+              right: 12,
+              top: 12,
+              child: RoundButton(
+                size: 40,
+                tooltip: MaterialLocalizations.of(ctx).closeButtonLabel,
+                onTap: () => Navigator.of(ctx).pop(),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: Ember.navy,
                 ),
               ),
             ),
@@ -844,60 +742,6 @@ Future<T?> showEmberPopup<T>(
       ),
     ),
   );
-}
-
-/// Orange kit stars (empty ones gray).
-class Stars extends StatelessWidget {
-  final num value;
-  final double size;
-  const Stars(this.value, {super.key, this.size = 14});
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (var i = 1; i <= 5; i++)
-        Padding(
-          padding: EdgeInsets.only(right: size * 0.18),
-          child: KitImage(
-            'star',
-            size: size,
-            color: i <= value.round() ? null : const Color(0xFFD9D9D9),
-          ),
-        ),
-    ],
-  );
-}
-
-/// Kit chilli scale 0–5: tilted chillies, red for the level, gray for the rest.
-class SpiceLevel extends StatelessWidget {
-  final int level;
-  const SpiceLevel(this.level, {super.key});
-  @override
-  Widget build(BuildContext context) {
-    if (level <= 0) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        children: [
-          for (var i = 1; i <= 5; i++)
-            SizedBox(
-              width: 18,
-              height: 27,
-              child: OverflowBox(
-                maxWidth: 27,
-                child: Transform.rotate(
-                  angle: -22.82 * math.pi / 180,
-                  child: KitImage(
-                    i <= level ? 'chili_red' : 'chili_gray',
-                    size: 20.6,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 void showMessage(BuildContext context, String text, {bool error = false}) {

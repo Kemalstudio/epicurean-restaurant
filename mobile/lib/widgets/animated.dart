@@ -103,12 +103,12 @@ class EmptyState extends StatelessWidget {
           Text(
             text!,
             textAlign: TextAlign.center,
-            style: Ember.text(14, color: Colors.black54),
+            style: Ember.text(14, color: Ember.text2),
           ),
         ],
         if (actionLabel != null && onAction != null) ...[
           const SizedBox(height: 18),
-          OrangeButton(actionLabel!, onPressed: onAction, height: 48),
+          PrimaryButton(actionLabel!, onPressed: onAction, height: 52),
         ],
       ],
     ),
