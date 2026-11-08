@@ -339,14 +339,17 @@ class DiscountBadge extends StatelessWidget {
     constraints: BoxConstraints(minWidth: width),
     height: height,
     padding: const EdgeInsets.symmetric(horizontal: 4),
-    alignment: Alignment.center,
     decoration: BoxDecoration(
       color: Ember.navy,
       borderRadius: BorderRadius.vertical(bottom: Radius.circular(radius)),
     ),
-    child: Text(
-      '-$percent%',
-      style: Ember.text(font, weight: FontWeight.w700, color: Colors.white),
+    // widthFactor 1: as wide as the text (or [width]), never the whole row
+    child: Center(
+      widthFactor: 1,
+      child: Text(
+        '-$percent%',
+        style: Ember.text(font, weight: FontWeight.w700, color: Colors.white),
+      ),
     ),
   );
 }
@@ -782,10 +785,7 @@ class KitDownArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Opacity(
     opacity: 0.4,
-    child: RotatedBox(
-      quarterTurns: 1,
-      child: KitImage('forward', size: size),
-    ),
+    child: RotatedBox(quarterTurns: 1, child: KitImage('forward', size: size)),
   );
 }
 

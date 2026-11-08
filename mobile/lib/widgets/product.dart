@@ -14,6 +14,11 @@ double priceOf(Map<String, dynamic> p, String? size) {
       (1 - numOf(p['discount_percent']) / 100);
 }
 
+/// Price without empty decimals ("110 TMT", "12.50 TMT"), as the kit's
+/// short price boxes need.
+String shortPrice(AppState app, num v) =>
+    app.price(v).replaceFirst('.00 ', ' ');
+
 bool hasOptions(Map<String, dynamic> p) =>
     ((p['default_ingredients'] as List?)?.length ?? 0) +
         ((p['optional_ingredients'] as List?)?.length ?? 0) >
@@ -142,7 +147,7 @@ class ProductCard extends StatelessWidget {
     return Opacity(
       opacity: available ? 1 : 0.6,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 25, 12, 33),
+        padding: const EdgeInsets.fromLTRB(12, 25, 9, 33),
         decoration: BoxDecoration(
           color: Ember.card,
           borderRadius: BorderRadius.circular(8),
@@ -175,7 +180,7 @@ class ProductCard extends StatelessWidget {
                         if (numOf(product['discount_percent']) > 0) ...[
                           const SizedBox(height: 8),
                           DiscountBadge(
-                            numOf(product['discount_percent']),
+                            numOf(product['discount_percent']).toInt(),
                             height: 26,
                             font: 13,
                           ),
@@ -186,7 +191,7 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Padding(
-                  padding: const EdgeInsets.only(right: 13),
+                  padding: const EdgeInsets.only(right: 16),
                   child: SizedBox(
                     width: 117,
                     height: 117,
@@ -238,13 +243,16 @@ class ProductCard extends StatelessWidget {
               )
             else
               Wrap(
-                spacing: 11,
+                spacing: 6,
                 runSpacing: 7,
                 children: [
                   for (var i = 0; i < options.length; i++)
                     _SizeButton(
                       label: options[i]['name'] ?? app.t('add_to_basket'),
-                      price: app.price(priceOf(product, options[i]['name'])),
+                      price: shortPrice(
+                        app,
+                        priceOf(product, options[i]['name']),
+                      ),
                       dark: i == 0 && options[i]['name'] != null,
                       onTap: () => choose(options[i]['name']),
                     ),
@@ -287,7 +295,7 @@ class _SizeButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: Container(
           constraints: const BoxConstraints(minHeight: 58, minWidth: 177),
-          padding: const EdgeInsets.fromLTRB(14, 9, 11, 9),
+          padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -306,7 +314,7 @@ class _SizeButton extends StatelessWidget {
               Container(
                 constraints: const BoxConstraints(minWidth: 90, minHeight: 39),
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: Ember.green,
                   borderRadius: BorderRadius.circular(4),
@@ -391,10 +399,7 @@ class KitQtyRow extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(
-              '$qty',
-              style: Ember.text(15, weight: FontWeight.w700),
-            ),
+            child: Text('$qty', style: Ember.text(15, weight: FontWeight.w700)),
           ),
           btn('plus_max', onPlus, app.t('increase_quantity')),
         ],

@@ -224,10 +224,7 @@ class _KitFooterState extends State<KitFooter> {
                   ])
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 7),
-                      child: Semantics(
-                        label: s,
-                        child: KitImage(s, size: 45),
-                      ),
+                      child: Semantics(label: s, child: KitImage(s, size: 45)),
                     ),
                 ],
               ),
