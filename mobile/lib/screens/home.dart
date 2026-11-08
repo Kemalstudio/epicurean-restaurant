@@ -5,6 +5,7 @@ import '../core/state.dart';
 import '../core/theme.dart';
 import '../widgets/animated.dart';
 import '../widgets/common.dart';
+import '../widgets/footer.dart';
 import '../widgets/join.dart';
 import 'auth.dart';
 import 'restaurant.dart';
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final t = app.t;
-    // Kit "Mobile Home": cards sit 11px from the screen edge, section titles 21px;
+    // Kit "Mobile Home" (430 wide): cards sit 11–21px from the screen edge;
     // the categories band and the footer run edge to edge.
     Widget pad(Widget child, [double h = 11]) => Padding(
       padding: EdgeInsets.symmetric(horizontal: h),
@@ -54,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onRefresh: () async => setState(_load),
           children: [
             pad(const _Hero()),
-            const SizedBox(height: 22),
+            const SizedBox(height: 29),
             if (snap.hasError)
               pad(
                 ErrorState(error: snap.error!, onRetry: () => setState(_load)),
@@ -69,45 +70,23 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 23),
               _categories(context, data),
               const SizedBox(height: 29),
-              pad(
-                SectionTitle(
-                  t('popular_restaurants'),
-                  trailing: TextButton(
-                    onPressed: () => go(context, const RestaurantsScreen()),
-                    child: Text(
-                      t('see_all'),
-                      style: Ember.text(
-                        14,
-                        weight: FontWeight.w600,
-                        color: Ember.orange,
-                      ),
-                    ),
+              RestaurantStrip(
+                title: t('popular_restaurants'),
+                items: List<Map<String, dynamic>>.from(
+                  (data['popular'] as List).map(
+                    (e) => Map<String, dynamic>.from(e),
                   ),
                 ),
-                21,
-              ),
-              SizedBox(
-                height: 156,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 21),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: (data['popular'] as List).length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (_, i) {
-                    final r = Map<String, dynamic>.from(data['popular'][i]);
-                    return RestaurantTile(
-                      r,
-                      onTap: () =>
-                          go(context, RestaurantScreen(slug: r['slug'])),
-                    );
-                  },
-                ),
+                onTap: (r) => go(context, RestaurantScreen(slug: r['slug'])),
               ),
             ],
-            const SizedBox(height: 40),
+            const SizedBox(height: 39),
+            pad(const _AppPromo(), 21),
+            const SizedBox(height: 54),
             pad(
               _JoinCard(
-                image: '/img/1600565193348-f74bd3c7ccdf-1200.webp',
+                image: 'partner.jpg',
+                angle: 231.6,
                 tab: t('partner_tab_label'),
                 kicker: t('partner_kicker'),
                 title: t('partner_title'),
@@ -118,7 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
             pad(
               _JoinCard(
-                image: '/img/1617347454431-f49d7ff5c3b1-1200.webp',
+                image: 'rider.jpg',
+                angle: 231.3,
                 tab: t('rider_tab_label'),
                 kicker: t('rider_kicker'),
                 title: t('rider_title'),
@@ -132,8 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 36),
               pad(_stats(app, Map<String, dynamic>.from(data['stats'])), 13),
             ],
-            const SizedBox(height: 40),
-            const _Footer(),
+            const SizedBox(height: 63),
+            const KitFooter(),
           ],
         );
       },
@@ -167,19 +147,19 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 21),
+          padding: const EdgeInsets.only(left: 21, right: 21),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  '${app.t('deals_title', {'percent': max.toInt()})} 🎊',
-                  style: Ember.text(16, weight: FontWeight.w600),
+                  '${app.t('deals_title', {'percent': max.toInt()})} ${app.t('discount_offers')} 🎊',
+                  style: Ember.text(16, weight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 8),
-              // Kit filter pill: round arrow on the left, small text
+              // Kit filter pill 132 x 38: navy outline, small round arrow, 10pt text
               PopupMenuButton<String>(
-                tooltip: app.t('filter_all'),
+                tooltip: app.t('filter_by_cuisine'),
                 onSelected: (v) => setState(() => _filter = v),
                 itemBuilder: (_) => [
                   for (final e in options.entries)
@@ -191,10 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 38,
                   constraints: const BoxConstraints(
-                    minWidth: 110,
+                    minWidth: 132,
                     maxWidth: 170,
                   ),
-                  padding: const EdgeInsets.only(left: 10, right: 14),
+                  padding: const EdgeInsets.only(left: 9, right: 12),
                   decoration: BoxDecoration(
                     border: Border.all(color: Ember.navy),
                     borderRadius: BorderRadius.circular(Ember.pill),
@@ -202,17 +182,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.expand_circle_down,
-                        color: Ember.navy,
-                        size: 20,
+                      const RotatedBox(
+                        quarterTurns: 1,
+                        child: KitImage('next', size: 18),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 7),
                       Flexible(
                         child: Text(
                           options[_filter] ?? options['all']!,
                           overflow: TextOverflow.ellipsis,
-                          style: Ember.text(11, color: Colors.black),
+                          style: Ember.text(10),
                         ),
                       ),
                     ],
@@ -222,14 +201,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 23),
         SizedBox(
           // 150 photo + 10 gap + caption (one 13pt line, two 14pt lines),
           // grown with the system font scale.
           height:
-              164 +
+              166 +
               MediaQuery.textScalerOf(context).scale(13) * 1.5 +
-              MediaQuery.textScalerOf(context).scale(14) * 1.2 * 2,
+              MediaQuery.textScalerOf(context).scale(17) * 2,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 11),
             scrollDirection: Axis.horizontal,
@@ -254,8 +233,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Kit: light gray band across the whole screen, 189 x 211 tiles, 20px apart
     return Container(
       width: double.infinity,
-      color: const Color(0xFFEBEBEB),
-      padding: const EdgeInsets.fromLTRB(14, 28, 14, 39),
+      color: Ember.band,
+      padding: const EdgeInsets.fromLTRB(14, 28, 14, 44),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -263,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.only(left: 7),
             child: Text(
               app.t('popular_categories_title'),
-              style: Ember.text(16, weight: FontWeight.w600),
+              style: Ember.text(16, weight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 29),
@@ -307,10 +286,11 @@ class _HomeScreenState extends State<HomeScreen> {
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (_) => ',',
     );
-    // Kit: one column, big light numbers, thin lines between
+    // Kit: 406 wide orange card, one column, light 64pt numbers,
+    // bold 24pt labels, thin 194px lines between
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 70, 24, 70),
+      padding: const EdgeInsets.fromLTRB(16, 78, 16, 60),
       decoration: BoxDecoration(
         color: Ember.orange,
         borderRadius: BorderRadius.circular(Ember.radius),
@@ -320,10 +300,10 @@ class _HomeScreenState extends State<HomeScreen> {
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0)
               Container(
-                width: 193,
+                width: 194,
                 height: 1,
-                margin: const EdgeInsets.symmetric(vertical: 40),
-                color: Colors.white.withValues(alpha: 0.6),
+                margin: const EdgeInsets.only(top: 38, bottom: 44),
+                color: Ember.gray,
               ),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -337,12 +317,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
             Text(
               items[i].$2,
               textAlign: TextAlign.center,
               style: Ember.text(
-                22,
+                24,
                 weight: FontWeight.w700,
                 color: Colors.white,
                 height: 1.2,
@@ -381,8 +360,10 @@ class _HeroState extends State<_Hero> {
   @override
   Widget build(BuildContext context) {
     final t = context.watch<AppState>().t;
+    // Kit: navy 403 x 283 card, radius 12
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 36),
+      constraints: const BoxConstraints(minHeight: 283),
+      padding: const EdgeInsets.fromLTRB(20, 33, 20, 43),
       decoration: BoxDecoration(
         color: Ember.navy,
         borderRadius: BorderRadius.circular(Ember.radius),
@@ -394,79 +375,89 @@ class _HeroState extends State<_Hero> {
             textAlign: TextAlign.center,
             style: Ember.text(12, color: Colors.white),
           ),
-          const SizedBox(height: 10),
-          Text(
-            t('hero_title_1'),
+          const SizedBox(height: 12),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '${t('hero_title_1')}\n'),
+                TextSpan(
+                  text: t('hero_title_2'),
+                  style: const TextStyle(color: Ember.orange),
+                ),
+              ],
+            ),
             textAlign: TextAlign.center,
             style: Ember.text(
-              32,
+              34,
               weight: FontWeight.w600,
               color: Colors.white,
-              height: 1.1,
+              height: 36 / 34,
             ),
           ),
-          Text(
-            t('hero_title_2'),
-            textAlign: TextAlign.center,
-            style: Ember.text(
-              32,
-              weight: FontWeight.w600,
-              color: Ember.orange,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 11),
           Text(
             t('hero_search_label'),
             textAlign: TextAlign.center,
             style: Ember.text(13, color: Colors.white),
           ),
-          const SizedBox(height: 18),
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              TextField(
-                controller: _ctrl,
-                onSubmitted: (_) => _search(),
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: t('hero_search_placeholder'),
-                  fillColor: Colors.white,
-                  // kit: plain white pill, no outline
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(Ember.pill),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.fromLTRB(28, 18, 70, 18),
-                ),
-              ),
-              Material(
-                color: Ember.orange,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: _search,
+          const SizedBox(height: 16),
+          // Kit: 293 x 57 white pill, the 57px orange round button overlaps its end
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 7),
                   child: SizedBox(
-                    width: 57,
                     height: 57,
-                    child: Center(
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Ember.navy, width: 2),
+                    child: TextField(
+                      controller: _ctrl,
+                      onSubmitted: (_) => _search(),
+                      textInputAction: TextInputAction.search,
+                      style: Ember.text(15),
+                      decoration: InputDecoration(
+                        hintText: t('hero_search_placeholder'),
+                        hintStyle: Ember.text(15, color: Colors.black87),
+                        fillColor: Colors.white,
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Ember.pill),
+                          borderSide: BorderSide.none,
                         ),
-                        child: const Icon(
-                          Icons.chevron_right,
-                          color: Ember.navy,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Ember.pill),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          30,
+                          18,
+                          62,
+                          18,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Semantics(
+                  button: true,
+                  label: t('search'),
+                  child: Material(
+                    color: Ember.orange,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _search,
+                      child: const SizedBox(
+                        width: 57,
+                        height: 57,
+                        child: Center(child: KitImage('next', size: 34)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -474,13 +465,121 @@ class _HeroState extends State<_Hero> {
   }
 }
 
-/// Kit "Partner with us" / "Ride with us" card: photo, white tab on top,
-/// orange kicker, white title and a small orange "Get Started" pill.
+/// Kit "Ember-ing is more Personalised & Instant": gray gradient card with
+/// the store badges and the couple photo standing on its bottom edge.
+class _AppPromo extends StatelessWidget {
+  const _AppPromo();
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<AppState>().t;
+    final title = Ember.text(
+      32,
+      weight: FontWeight.w700,
+      color: Ember.navy,
+    ).copyWith(letterSpacing: -1.92);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(Ember.radius),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFEEEEEE), Color(0xFFE0E1DC)],
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 57),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 10,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: EmberLogo(height: 30),
+                  ),
+                  Text(t('app_title_rest'), style: title),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: t('app_personalised'),
+                    style: const TextStyle(
+                      color: Ember.orange,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Ember.orange,
+                    ),
+                  ),
+                  TextSpan(text: ' ${t('app_instant')}'),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: Ember.text(
+                24,
+                weight: FontWeight.w500,
+                color: Ember.navy,
+              ).copyWith(letterSpacing: -1.44),
+            ),
+            const SizedBox(height: 13),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                t('app_download'),
+                textAlign: TextAlign.center,
+                style: Ember.text(16).copyWith(letterSpacing: -0.96),
+              ),
+            ),
+            const SizedBox(height: 30),
+            const StoreBadges(),
+            const SizedBox(height: 17),
+            SizedBox(
+              height: 256,
+              width: 340,
+              child: Stack(
+                children: [
+                  const Positioned(
+                    left: 0,
+                    top: 0,
+                    width: 322,
+                    height: 253,
+                    child: Opacity(
+                      opacity: 0.2,
+                      child: KitImage('friends_shadow.webp', fit: BoxFit.cover),
+                    ),
+                  ),
+                  const Positioned(
+                    left: 9,
+                    top: 3,
+                    width: 322,
+                    height: 253,
+                    child: KitImage('friends.webp', fit: BoxFit.cover),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kit "Partner with us" / "Ride with us" card: 391 x 223 photo (radius 4),
+/// white tab on top, orange kicker, white title and a small "Get Started" pill.
 class _JoinCard extends StatelessWidget {
   final String image, tab, kicker, title;
+  final double angle;
   final bool partner;
   const _JoinCard({
     required this.image,
+    required this.angle,
     required this.tab,
     required this.kicker,
     required this.title,
@@ -495,34 +594,28 @@ class _JoinCard extends StatelessWidget {
       onLogin: () => go(context, const LoginScreen()),
     );
     return ClipRRect(
-      borderRadius: BorderRadius.circular(Ember.radius),
+      borderRadius: BorderRadius.circular(4),
       child: SizedBox(
         height: 223,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            NetImage(image),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  colors: [Color(0x0003081F), Color(0xCC03081F)],
-                ),
-              ),
+            KitImage(image, fit: BoxFit.cover),
+            DecoratedBox(
+              decoration: BoxDecoration(gradient: kitPhotoGradient(angle)),
             ),
             Positioned(
               left: 36,
               top: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
+                height: 33,
+                constraints: const BoxConstraints(minWidth: 191),
+                padding: const EdgeInsets.symmetric(horizontal: 11),
+                alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(Ember.radius),
+                    bottom: Radius.circular(4),
                   ),
                 ),
                 child: Text(
@@ -538,16 +631,17 @@ class _JoinCard extends StatelessWidget {
             Positioned(
               left: 36,
               right: 20,
-              bottom: 24,
+              bottom: 23,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     kicker,
                     style: Ember.text(
-                      15,
+                      16,
                       weight: FontWeight.w500,
                       color: Ember.orange,
+                      height: 1.3,
                     ),
                   ),
                   Text(
@@ -556,10 +650,10 @@ class _JoinCard extends StatelessWidget {
                       24,
                       weight: FontWeight.w700,
                       color: Colors.white,
-                      height: 1.15,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
                   Material(
                     color: Ember.orange,
                     shape: const StadiumBorder(),
@@ -567,16 +661,16 @@ class _JoinCard extends StatelessWidget {
                       customBorder: const StadiumBorder(),
                       onTap: open,
                       child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 26),
-                        // widthFactor 1: the pill is as wide as its label (kit)
+                        height: 29,
+                        constraints: const BoxConstraints(minWidth: 119),
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
                         child: Center(
                           widthFactor: 1,
                           child: Text(
                             t('get_started'),
                             style: Ember.text(
-                              13,
-                              weight: FontWeight.w600,
+                              11,
+                              weight: FontWeight.w500,
                               color: Colors.white,
                             ),
                           ),
@@ -594,8 +688,9 @@ class _JoinCard extends StatelessWidget {
   }
 }
 
-/// Kit "Know more about us!": questions on white (the open one is an orange pill),
-/// the answer in a navy block below — "How does it work?" shows the three step cards.
+/// Kit "Know more about us!": questions on white (the open one is an orange
+/// pill), the answer in a navy block below — "How does it work?" shows the
+/// three gray step cards with the kit illustrations.
 class _KnowMore extends StatefulWidget {
   const _KnowMore();
   @override
@@ -608,6 +703,11 @@ class _KnowMoreState extends State<_KnowMore> {
   @override
   Widget build(BuildContext context) {
     final t = context.watch<AppState>().t;
+    final q18 = Ember.text(
+      18,
+      weight: FontWeight.w700,
+      color: Ember.navy,
+    ).copyWith(letterSpacing: -0.36);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -619,10 +719,15 @@ class _KnowMoreState extends State<_KnowMore> {
             style: Ember.text(26, weight: FontWeight.w700),
           ),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 46),
         for (final q in _qs)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 39),
+            padding: EdgeInsets.fromLTRB(
+              39,
+              _open == q && q != _qs.first ? 9 : 0,
+              45,
+              _open == q ? 18 : 0,
+            ),
             child: Semantics(
               selected: _open == q,
               child: Material(
@@ -632,30 +737,30 @@ class _KnowMoreState extends State<_KnowMore> {
                   customBorder: const StadiumBorder(),
                   onTap: () => setState(() => _open = q),
                   child: Container(
-                    constraints: const BoxConstraints(minHeight: 62),
+                    constraints: BoxConstraints(
+                      minHeight: _open == q ? 62 : 61,
+                    ),
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
+                      horizontal: 12,
                       vertical: 12,
                     ),
                     child: Text(
                       t(q),
                       textAlign: TextAlign.center,
-                      style: Ember.text(
-                        _open == q ? 17 : 16,
-                        weight: FontWeight.w700,
-                        color: Ember.navy,
-                      ),
+                      style: _open == q
+                          ? q18.copyWith(color: Colors.black)
+                          : q18,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 53),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 13),
-          padding: const EdgeInsets.fromLTRB(20, 62, 20, 44),
+          padding: const EdgeInsets.fromLTRB(20, 62, 20, 43),
           decoration: BoxDecoration(
             color: Ember.navy,
             borderRadius: BorderRadius.circular(Ember.radius),
@@ -669,24 +774,15 @@ class _KnowMoreState extends State<_KnowMore> {
   Widget _steps(String Function(String, [Map<String, Object?>]) t) => Column(
     children: [
       for (final s in const [
-        (
-          'step_place_title',
-          'step_place_text',
-          Icons.shopping_bag_outlined,
-          Ember.orange,
-        ),
-        ('step_track_title', 'step_track_text', Icons.pedal_bike, Ember.navy),
-        (
-          'step_get_title',
-          'step_get_text',
-          Icons.inventory_2_outlined,
-          Ember.green,
-        ),
+        ('step_place_title', 'step_place_text', 'step_order', 128.0),
+        ('step_track_title', 'step_track_text', 'step_track', 115.0),
+        ('step_get_title', 'step_get_text', 'step_get', 128.0),
       ])
         Container(
           width: 238,
+          constraints: const BoxConstraints(minHeight: 285),
           margin: const EdgeInsets.only(bottom: 34),
-          padding: const EdgeInsets.fromLTRB(18, 30, 18, 26),
+          padding: const EdgeInsets.fromLTRB(16, 31, 16, 22),
           decoration: BoxDecoration(
             color: Ember.gray,
             borderRadius: BorderRadius.circular(Ember.radius),
@@ -697,26 +793,37 @@ class _KnowMoreState extends State<_KnowMore> {
                 t(s.$1),
                 textAlign: TextAlign.center,
                 style: Ember.text(
-                  17,
+                  18,
                   weight: FontWeight.w700,
                   color: Ember.navy,
-                ),
+                ).copyWith(letterSpacing: -0.36),
               ),
-              const SizedBox(height: 18),
-              Icon(s.$3, size: 96, color: s.$4),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 128,
+                child: Center(child: KitImage(s.$3, size: s.$4)),
+              ),
+              const SizedBox(height: 5),
               Text(
                 t(s.$2),
                 textAlign: TextAlign.center,
-                style: Ember.text(15, weight: FontWeight.w500, height: 1.5),
+                style: Ember.text(
+                  16,
+                  weight: FontWeight.w500,
+                  height: 25 / 16,
+                ).copyWith(letterSpacing: -0.32),
               ),
             ],
           ),
         ),
+      const SizedBox(height: 2),
       Text(
         t('how_summary'),
         textAlign: TextAlign.center,
-        style: Ember.text(15, color: Colors.white, height: 1.6),
+        style: Ember.text(
+          16,
+          color: Colors.white,
+        ).copyWith(letterSpacing: -0.32),
       ),
     ],
   );
@@ -734,145 +841,10 @@ class _KnowMoreState extends State<_KnowMore> {
           Text(
             t('${q}_a'),
             textAlign: TextAlign.center,
-            style: Ember.text(15, color: Colors.white, height: 1.6),
+            style: Ember.text(16, color: Colors.white, height: 1.6),
           ),
         ],
       );
-}
-
-/// Kit footer: gray band with the logo, deals-by-email form, then the navy copyright bar.
-class _Footer extends StatefulWidget {
-  const _Footer();
-  @override
-  State<_Footer> createState() => _FooterState();
-}
-
-class _FooterState extends State<_Footer> {
-  final _email = TextEditingController();
-  bool _sending = false;
-
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
-  }
-
-  Future<void> _subscribe() async {
-    final t = context.read<AppState>().t;
-    final email = _email.text.trim();
-    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      showMessage(context, t('invalid_email'), error: true);
-      return;
-    }
-    setState(() => _sending = true);
-    try {
-      await Api.instance.subscribe(email);
-      _email.clear();
-      if (mounted) showMessage(context, t('subscribed'));
-    } on ApiError catch (e) {
-      if (mounted) showMessage(context, e.message, error: true);
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.watch<AppState>().t;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          color: const Color(0xFFE8E8E8),
-          padding: const EdgeInsets.fromLTRB(26, 56, 26, 48),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Center(child: EmberLogo(height: 58)),
-              const SizedBox(height: 22),
-              Text(
-                t('company_line'),
-                textAlign: TextAlign.center,
-                style: Ember.text(15, height: 1.5),
-              ),
-              const SizedBox(height: 44),
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  t('footer_deals_title'),
-                  style: Ember.text(
-                    17,
-                    weight: FontWeight.w700,
-                    color: Ember.navy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                height: 59,
-                decoration: BoxDecoration(
-                  color: Ember.gray,
-                  borderRadius: BorderRadius.circular(Ember.pill),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _email,
-                        keyboardType: TextInputType.emailAddress,
-                        onSubmitted: (_) => _subscribe(),
-                        style: Ember.text(15),
-                        decoration: const InputDecoration(
-                          hintText: 'youremail@gmail.com',
-                          filled: false,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.only(left: 24),
-                        ),
-                      ),
-                    ),
-                    Material(
-                      color: Ember.orange,
-                      shape: const StadiumBorder(),
-                      child: InkWell(
-                        customBorder: const StadiumBorder(),
-                        onTap: _sending ? null : _subscribe,
-                        child: Container(
-                          height: 59,
-                          padding: const EdgeInsets.symmetric(horizontal: 26),
-                          alignment: Alignment.center,
-                          child: Text(
-                            t('subscribe'),
-                            style: Ember.text(16, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                t('no_spam'),
-                textAlign: TextAlign.center,
-                style: Ember.text(13, color: Ember.navy),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          color: Ember.navy,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Text(
-            '© ${DateTime.now().year} Ember. ${t('copyright')}',
-            textAlign: TextAlign.center,
-            style: Ember.text(15, color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Shared retry box for other screens.

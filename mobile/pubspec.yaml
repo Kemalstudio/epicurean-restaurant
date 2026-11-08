@@ -66,6 +66,7 @@ flutter:
   assets:
     - assets/brand/
     - assets/lottie/
+    - assets/kit/
 
   # Poppins (Latin), PoppinsExt (Latin Extended: Turkmen letters), MontserratCyr (Cyrillic for Russian).
   # Converted from the website's self-hosted fonts (SIL Open Font License).

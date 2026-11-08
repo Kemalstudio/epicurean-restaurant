@@ -15,6 +15,16 @@ class Ember {
   static const chili = Color(0xFFE12B25);
   static const pink = Color(0xFFFFB1B1);
 
+  /// Thin gray header rules (kit #B3B3B3).
+  static const rule = Color(0xFFB3B3B3);
+
+  /// Gray bands: categories (#D9D9D9 at 50%) and footer (#D9D9D9 at 60%) on white.
+  static const band = Color(0xFFECECEC);
+  static const footerBand = Color(0xFFE8E8E8);
+
+  /// Popup backdrop (kit rgba(14,14,14,0.95)).
+  static const backdrop = Color(0xF20E0E0E);
+
   static const radius = 12.0;
   static const pill = 120.0;
 

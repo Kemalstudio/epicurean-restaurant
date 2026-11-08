@@ -92,7 +92,8 @@ Future<void> addToBasket(
   }
 }
 
-/// Menu item card with size/price buttons (kit: Mobile Restaurant).
+//// Menu item card (kit: Mobile Restaurant) — 393 wide, radius 8, soft shadow,
+/// round 117px photo, chilli scale, size buttons with green price boxes.
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product, restaurant;
   const ProductCard({
@@ -115,6 +116,8 @@ class ProductCard extends StatelessWidget {
           ]
         : sizes;
     final available = product['is_available'] != false;
+    final vegetarian =
+        product['is_vegetarian'] == true || product['is_vegan'] == true;
 
     Future<void> choose(String? size) async {
       if (hasOptions(product)) {
@@ -139,11 +142,11 @@ class ProductCard extends StatelessWidget {
     return Opacity(
       opacity: available ? 1 : 0.6,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(12, 25, 12, 33),
         decoration: BoxDecoration(
           color: Ember.card,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.black26),
+          border: Border.all(color: const Color(0x1A000000)),
           boxShadow: Ember.cardShadow,
         ),
         child: Column(
@@ -153,75 +156,90 @@ class ProductCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${product['name']}',
-                        style: Ember.text(
-                          20,
-                          weight: FontWeight.w600,
-                          height: 1.2,
-                        ),
-                      ),
-                      SpiceLevel(
-                        (product['spice_level'] as num?)?.toInt() ?? 0,
-                      ),
-                      if ('${product['description'] ?? ''}'.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 19, top: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          '${product['description']}',
-                          style: Ember.text(14, height: 1.7),
-                        ),
-                      ],
-                      if (numOf(product['discount_percent']) > 0) ...[
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Ember.navy,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '−${product['discount_percent']}%',
-                            style: Ember.text(
-                              13,
-                              weight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                          '${product['name']}',
+                          style: Ember.text(
+                            20,
+                            weight: FontWeight.w600,
+                            height: 28 / 20,
                           ),
                         ),
+                        SpiceLevel(
+                          (product['spice_level'] as num?)?.toInt() ?? 0,
+                        ),
+                        if (numOf(product['discount_percent']) > 0) ...[
+                          const SizedBox(height: 8),
+                          DiscountBadge(
+                            numOf(product['discount_percent']),
+                            height: 26,
+                            font: 13,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                ClipOval(
-                  child: NetImage(
-                    product['image_url'],
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(right: 13),
+                  child: SizedBox(
                     width: 117,
                     height: 117,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ClipOval(
+                          child: NetImage(
+                            product['image_url'],
+                            width: 117,
+                            height: 117,
+                          ),
+                        ),
+                        if (vegetarian)
+                          Positioned(
+                            left: -36,
+                            top: 12,
+                            child: Transform.rotate(
+                              angle: -0.5236,
+                              child: const KitImage('vegan', size: 48),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            if ('${product['description'] ?? ''}'.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(19, 18, 34, 0),
+                child: Text(
+                  '${product['description']}',
+                  style: Ember.text(14, height: 25 / 14),
+                ),
+              ),
+            const SizedBox(height: 19),
             if (!available)
-              Text(
-                app.t('unavailable_now'),
-                style: Ember.text(
-                  14,
-                  weight: FontWeight.w600,
-                  color: Ember.red,
+              Padding(
+                padding: const EdgeInsets.only(left: 19),
+                child: Text(
+                  app.t('unavailable_now'),
+                  style: Ember.text(
+                    14,
+                    weight: FontWeight.w600,
+                    color: Ember.red,
+                  ),
                 ),
               )
             else
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: 11,
+                runSpacing: 7,
                 children: [
                   for (var i = 0; i < options.length; i++)
                     _SizeButton(
@@ -239,6 +257,7 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+/// Kit size button: 58 high, radius 4; the first one is navy.
 class _SizeButton extends StatelessWidget {
   final String label, price;
   final bool dark;
@@ -256,19 +275,22 @@ class _SizeButton extends StatelessWidget {
     label: '$label $price',
     excludeSemantics: true,
     child: Material(
-      color: dark ? Ember.navy : Colors.white,
+      color: dark ? Ember.navy : Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
-        side: const BorderSide(color: Ember.navy),
+        side: BorderSide(
+          color: dark ? const Color(0xFF8E8E8E) : const Color(0x3303081F),
+        ),
       ),
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 58, minWidth: 177),
+          padding: const EdgeInsets.fromLTRB(14, 9, 11, 9),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Long labels ("Add to basket" in ru/tk, big fonts) wrap instead of overflowing.
               Flexible(
                 child: Text(
                   label,
@@ -280,7 +302,7 @@ class _SizeButton extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Container(
                 constraints: const BoxConstraints(minWidth: 90, minHeight: 39),
                 alignment: Alignment.center,
@@ -304,6 +326,81 @@ class _SizeButton extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Kit gray row: small round photo | name ........ (−) [1] (+)  (kit "Meal Deal").
+class KitQtyRow extends StatelessWidget {
+  final String? image;
+  final String name;
+  final int qty;
+  final VoidCallback? onMinus, onPlus;
+  const KitQtyRow({
+    super.key,
+    required this.image,
+    required this.name,
+    required this.qty,
+    this.onMinus,
+    this.onPlus,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final app = context.read<AppState>();
+    Widget btn(String icon, VoidCallback? f, String tip) => Semantics(
+      button: true,
+      label: tip,
+      child: InkResponse(
+        onTap: f,
+        radius: 22,
+        child: Opacity(
+          opacity: f == null ? 0.35 : 1,
+          child: KitImage(icon, size: 35),
+        ),
+      ),
+    );
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.only(left: 9, right: 10),
+      decoration: BoxDecoration(
+        color: const Color(0x99D9D9D9),
+        borderRadius: BorderRadius.circular(Ember.radius),
+      ),
+      child: Row(
+        children: [
+          ClipOval(child: NetImage(image, width: 39, height: 39)),
+          Container(
+            width: 1,
+            height: 32,
+            margin: const EdgeInsets.symmetric(horizontal: 11),
+            color: Colors.black38,
+          ),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Ember.text(15, weight: FontWeight.w700, color: Ember.navy),
+            ),
+          ),
+          btn('minus', onMinus, app.t('decrease_quantity')),
+          Container(
+            width: 30,
+            height: 32,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '$qty',
+              style: Ember.text(15, weight: FontWeight.w700),
+            ),
+          ),
+          btn('plus_max', onPlus, app.t('increase_quantity')),
+        ],
+      ),
+    );
+  }
 }
 
 /// Customisation popup (kit: "Customise Pizza").
@@ -371,9 +468,9 @@ class _OptionsSheetState extends State<OptionsSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 140, child: NetImage(p['image_url'])),
+            SizedBox(height: 188, child: NetImage(p['image_url'])),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+              padding: const EdgeInsets.fromLTRB(23, 11, 15, 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -382,19 +479,65 @@ class _OptionsSheetState extends State<OptionsSheet> {
                       Flexible(
                         child: Text(
                           '${widget.restaurant['name']}',
-                          style: Ember.text(16, weight: FontWeight.w700),
+                          style: Ember.text(
+                            24,
+                            weight: FontWeight.w700,
+                            color: Ember.navy,
+                            height: 58 / 24,
+                          ),
                         ),
                       ),
-                      const Icon(Icons.chevron_right),
+                      const SizedBox(width: 8),
+                      const KitImage('forward_chevron', size: 30),
                     ],
                   ),
-                  const SizedBox(height: 6),
                   Text(
-                    app.t('customise_title', {'name': p['name']}),
-                    style: Ember.text(24, weight: FontWeight.w700, height: 1.2),
+                    '${p['name']}',
+                    style: Ember.text(
+                      34,
+                      weight: FontWeight.w700,
+                      color: Ember.navy,
+                      height: 1.25,
+                    ),
                   ),
-                  if (sizes.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                  // Kit: round photo with a gray ring | divider | orange note
+                  Row(
+                    children: [
+                      Container(
+                        width: 132,
+                        height: 132,
+                        padding: const EdgeInsets.all(7),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE6E6E6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(child: NetImage(p['image_url'])),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 99,
+                        margin: const EdgeInsets.symmetric(horizontal: 18),
+                        color: const Color(0x8003081F),
+                      ),
+                      Expanded(
+                        child: Text(
+                          size == null
+                              ? app.price(unit)
+                              : '$size\n${app.price(unit)}',
+                          textAlign: TextAlign.center,
+                          style: Ember.text(
+                            16,
+                            weight: FontWeight.w700,
+                            color: Ember.orange,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (sizes.length > 1) ...[
+                    const SizedBox(height: 18),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -407,6 +550,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
                             selected: size == s['name'],
                             onSelected: (_) => setState(() => size = s['name']),
                             selectedColor: Ember.navy,
+                            backgroundColor: Colors.white,
                             labelStyle: Ember.text(
                               13,
                               weight: FontWeight.w700,
@@ -417,7 +561,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
                             showCheckmark: false,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
-                              side: const BorderSide(color: Ember.navy),
+                              side: const BorderSide(color: Color(0x3303081F)),
                             ),
                           ),
                       ],
@@ -426,7 +570,6 @@ class _OptionsSheetState extends State<OptionsSheet> {
                   if (defaults.isNotEmpty)
                     _Group(
                       title: app.t('included_ingredients'),
-                      icon: Icons.eco,
                       children: [
                         for (final id in defaults)
                           _Check(
@@ -441,7 +584,6 @@ class _OptionsSheetState extends State<OptionsSheet> {
                   if (optional.isNotEmpty)
                     _Group(
                       title: app.t('extra_toppings'),
-                      icon: Icons.restaurant,
                       children: [
                         for (final id in optional)
                           _Check(
@@ -457,94 +599,53 @@ class _OptionsSheetState extends State<OptionsSheet> {
                       ],
                     ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          constraints: const BoxConstraints(minHeight: 54),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Ember.orange.withValues(alpha: 0.8),
-                            border: Border.all(color: Colors.black),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: LabelValueRow(
-                            gap: 8,
-                            label: Text(
-                              app.t('total_to_pay'),
-                              style: Ember.text(
-                                13,
-                                weight: FontWeight.w600,
-                                color: Colors.white,
-                                height: 1.2,
-                              ),
-                            ),
-                            value: Text(
-                              app.price(unit * qty),
-                              style: Ember.text(
-                                22,
-                                weight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: qty > 1 ? () => setState(() => qty--) : null,
-                        icon: const Icon(Icons.remove),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Ember.navy,
-                        ),
-                        tooltip: app.t('decrease_quantity'),
-                      ),
-                      Text(
-                        '$qty',
-                        style: Ember.text(16, weight: FontWeight.w700),
-                      ),
-                      IconButton.filled(
-                        onPressed: qty < 99
-                            ? () => setState(() => qty++)
-                            : null,
-                        icon: const Icon(Icons.add),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Ember.navy,
-                        ),
-                        tooltip: app.t('increase_quantity'),
-                      ),
-                    ],
+                  KitQtyRow(
+                    image: p['image_url'],
+                    name: '${p['name']}',
+                    qty: qty,
+                    onMinus: qty > 1 ? () => setState(() => qty--) : null,
+                    onPlus: qty < 99 ? () => setState(() => qty++) : null,
                   ),
-                  const SizedBox(height: 20),
-                  GreenButton(
-                    app.t('add_to_basket'),
-                    height: 56,
-                    onPressed: () async {
-                      final nav = Navigator.of(context);
-                      await addToBasket(
-                        context,
-                        product: p,
-                        restaurant: widget.restaurant,
-                        size: size,
-                        quantity: qty,
-                        added: [
-                          for (final id in added)
-                            {
-                              'id': id,
-                              'name': ingredients[id]?['name'] ?? id,
-                              'price': ingredients[id]?['price'] ?? 0,
-                            },
-                        ],
-                        removed: [
-                          for (final id in removed)
-                            {'id': id, 'name': ingredients[id]?['name'] ?? id},
-                        ],
-                      );
-                      if (nav.mounted) nav.pop();
-                    },
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 3, right: 9),
+                    child: TotalToPay(
+                      label: app.t('total_to_pay'),
+                      amount: app.price(unit * qty),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 3, right: 9),
+                    child: GreenButton(
+                      app.t('add_to_basket'),
+                      onPressed: () async {
+                        final nav = Navigator.of(context);
+                        await addToBasket(
+                          context,
+                          product: p,
+                          restaurant: widget.restaurant,
+                          size: size,
+                          quantity: qty,
+                          added: [
+                            for (final id in added)
+                              {
+                                'id': id,
+                                'name': ingredients[id]?['name'] ?? id,
+                                'price': ingredients[id]?['price'] ?? 0,
+                              },
+                          ],
+                          removed: [
+                            for (final id in removed)
+                              {
+                                'id': id,
+                                'name': ingredients[id]?['name'] ?? id,
+                              },
+                          ],
+                        );
+                        if (nav.mounted) nav.pop();
+                      },
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Center(
@@ -553,7 +654,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
                       child: Text(
                         app.t('take_me_back'),
                         style: Ember.text(
-                          14,
+                          16,
                           weight: FontWeight.w600,
                           color: Colors.black,
                         ).copyWith(decoration: TextDecoration.underline),
@@ -570,65 +671,81 @@ class _OptionsSheetState extends State<OptionsSheet> {
   }
 }
 
+/// Kit toppings box: thin outline (radius 12) with an orange carrot circle
+/// and a navy title tab sitting on its top edge; two columns of options.
 class _Group extends StatelessWidget {
   final String title;
-  final IconData icon;
   final List<Widget> children;
-  const _Group({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
+  const _Group({required this.title, required this.children});
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 34),
+    padding: const EdgeInsets.only(top: 44),
     child: Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 36, 16, 12),
+          padding: const EdgeInsets.fromLTRB(18, 48, 8, 14),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.black26),
+            border: Border.all(color: const Color(0x4D000000)),
             borderRadius: BorderRadius.circular(Ember.radius),
           ),
-          child: Wrap(spacing: 8, runSpacing: 4, children: children),
+          child: LayoutBuilder(
+            builder: (context, box) => Wrap(
+              runSpacing: 4,
+              children: [
+                for (final c in children)
+                  SizedBox(width: box.maxWidth / 2, child: c),
+              ],
+            ),
+          ),
         ),
         Positioned(
-          left: 10,
-          top: -22,
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Ember.orange,
-                  shape: BoxShape.circle,
+          left: 11,
+          right: 30,
+          top: -33,
+          child: SizedBox(
+            height: 65,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 42,
+                  right: 0,
+                  top: 7,
+                  child: Container(
+                    height: 55,
+                    padding: const EdgeInsets.only(left: 44, right: 12),
+                    alignment: Alignment.centerLeft,
+                    decoration: const BoxDecoration(
+                      color: Ember.navy,
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(Ember.radius),
+                      ),
+                    ),
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ember.text(
+                        18,
+                        weight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
-                child: Icon(icon, color: Ember.navy),
-              ),
-              Transform.translate(
-                offset: const Offset(-8, 0),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(20, 9, 16, 9),
+                Container(
+                  width: 65,
+                  height: 65,
+                  alignment: Alignment.center,
                   decoration: const BoxDecoration(
-                    color: Ember.navy,
-                    borderRadius: BorderRadius.horizontal(
-                      right: Radius.circular(4),
-                    ),
+                    color: Ember.orange,
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    title,
-                    style: Ember.text(
-                      14,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: const KitImage('carrot', size: 31),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -636,6 +753,7 @@ class _Group extends StatelessWidget {
   );
 }
 
+/// Kit option: gray ring when off, green tick box when on.
 class _Check extends StatelessWidget {
   final String label;
   final String? extra;
@@ -648,26 +766,57 @@ class _Check extends StatelessWidget {
     this.extra,
   });
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: double.infinity,
-    child: CheckboxListTile(
-      value: value,
-      onChanged: (v) => onChanged(v ?? false),
-      controlAffinity: ListTileControlAffinity.leading,
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      activeColor: Ember.green,
-      title: Text(label, style: Ember.text(15, weight: FontWeight.w700)),
-      secondary: extra == null
-          ? null
-          : Text(
-              extra!,
-              style: Ember.text(
-                12,
-                weight: FontWeight.w600,
-                color: Ember.green,
+  Widget build(BuildContext context) => Semantics(
+    checked: value,
+    label: label,
+    excludeSemantics: true,
+    child: InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 41,
+              height: 41,
+              child: Center(
+                child: value
+                    ? const KitImage('tick', size: 41)
+                    : Container(
+                        width: 25,
+                        height: 25,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFD8D8D8),
+                            width: 7,
+                          ),
+                        ),
+                      ),
               ),
             ),
+            const SizedBox(width: 3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Ember.text(16, height: 1.2)),
+                  if (extra != null)
+                    Text(
+                      extra!,
+                      style: Ember.text(
+                        12,
+                        weight: FontWeight.w600,
+                        color: Ember.green,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }

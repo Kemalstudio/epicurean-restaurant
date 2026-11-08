@@ -5,17 +5,20 @@ const Map<String, Map<String, String>> kAppStrings = {
     'please_fill': 'Please fill in this field',
     'invalid_phone': 'Please enter a valid phone number',
     'no_connection_title': 'No internet connection',
+    'discount_offers': 'Discount Offers',
   },
   'ru': {
     'invalid_email': 'Введите корректный email',
     'please_fill': 'Заполните это поле',
     'invalid_phone': 'Введите корректный номер телефона',
     'no_connection_title': 'Нет подключения к интернету',
+    'discount_offers': 'скидки',
   },
   'tk': {
     'invalid_email': 'Dogry e-poçta salgysyny giriziň',
     'please_fill': 'Bu meýdançany dolduryň',
     'invalid_phone': 'Dogry telefon belgisini giriziň',
     'no_connection_title': 'Internet birikmesi ýok',
+    'discount_offers': 'arzanladyşlar',
   },
 };

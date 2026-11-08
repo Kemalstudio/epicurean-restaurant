@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -45,6 +47,10 @@ class NetImage extends StatelessWidget {
   /// Widget tests have no network or cache directory: show placeholders instead.
   static bool disableForTests = false;
 
+  /// Screenshot tests: draw photos from local files instead of the network.
+  static Widget Function(String url, BoxFit fit, double? width, double? height)?
+  builderForTests;
+
   final String? url;
   final BoxFit fit;
   final double? width, height;
@@ -63,6 +69,10 @@ class NetImage extends StatelessWidget {
       height: height,
       color: Ember.gray,
     );
+    final test = builderForTests;
+    if (test != null && (url ?? '').isNotEmpty) {
+      return test(url!, fit, width, height);
+    }
     if (src.isEmpty || disableForTests) return placeholder;
     return CachedNetworkImage(
       imageUrl: src,
@@ -87,7 +97,35 @@ class EmberLogo extends StatelessWidget {
   );
 }
 
-/// Kit header: logo | hamburger, then orange account block + green basket block, then address line.
+//// Icon or picture exported from the Figma kit (assets/kit/).
+class KitImage extends StatelessWidget {
+  final String name;
+  final double? size, width, height;
+  final BoxFit fit;
+  final Color? color;
+  const KitImage(
+    this.name, {
+    super.key,
+    this.size,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.color,
+  });
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    'assets/kit/${name.contains('.') ? name : '$name.png'}',
+    width: width ?? size,
+    height: height ?? size,
+    fit: fit,
+    color: color,
+    filterQuality: FilterQuality.medium,
+    excludeFromSemantics: true,
+  );
+}
+
+/// Kit header (430 wide): logo | menu icon, the orange account block and
+/// green basket block (77 high), then the address line.
 class EmberHeader extends StatelessWidget {
   final VoidCallback onMenu, onAccount, onBasket, onAddress;
   const EmberHeader({
@@ -105,12 +143,11 @@ class EmberHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          height: 91,
+          height: 92,
           decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.black)),
+            border: Border(bottom: BorderSide(color: Ember.rule)),
           ),
           child: Row(
-            // stretch: the divider line runs the full header height (kit)
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Padding(
@@ -121,12 +158,15 @@ class EmberHeader extends StatelessWidget {
               Container(
                 width: 107,
                 decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: Colors.black)),
+                  border: Border(left: BorderSide(color: Ember.rule)),
                 ),
                 child: Semantics(
                   button: true,
                   label: app.t('open_menu'),
-                  child: InkWell(onTap: onMenu, child: const _Hamburger()),
+                  child: InkWell(
+                    onTap: onMenu,
+                    child: const Center(child: KitImage('menu', size: 65)),
+                  ),
                 ),
               ),
             ],
@@ -135,46 +175,61 @@ class EmberHeader extends StatelessWidget {
         SizedBox(
           height: 77,
           child: Row(
-            // both blocks fill the whole 77px band
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
+                flex: 210,
                 child: Semantics(
                   container: true,
                   child: MergeSemantics(
-                    child: InkWell(
-                      onTap: onAccount,
-                      child: Container(
-                        color: Ember.orange,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white,
-                              child: name == null
-                                  ? const Icon(
-                                      Icons.person_outline,
-                                      color: Ember.orange,
-                                    )
-                                  : Text(
-                                      '$name'.characters.first.toUpperCase(),
-                                      style: Ember.text(
-                                        16,
-                                        weight: FontWeight.w700,
+                    child: Material(
+                      color: Ember.orange,
+                      child: InkWell(
+                        onTap: onAccount,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 30, right: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: name == null
+                                    ? const Icon(
+                                        Icons.person,
                                         color: Ember.orange,
+                                        size: 28,
+                                      )
+                                    : Text(
+                                        '$name'.characters.first.toUpperCase(),
+                                        style: Ember.text(
+                                          18,
+                                          weight: FontWeight.w700,
+                                          color: Ember.orange,
+                                        ),
                                       ),
-                                    ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                name == null ? app.t('login_signup') : '$name',
-                                overflow: TextOverflow.ellipsis,
-                                style: Ember.text(14, weight: FontWeight.w600),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 11),
+                              Expanded(
+                                child: Text(
+                                  name == null
+                                      ? app.t('login_signup')
+                                      : '$name',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Ember.text(
+                                    14,
+                                    weight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -182,47 +237,46 @@ class EmberHeader extends StatelessWidget {
                 ),
               ),
               Expanded(
+                flex: 220,
                 child: Semantics(
                   container: true,
                   button: true,
                   label: '${app.t('open_basket')}: ${app.price(cart.total)}',
                   excludeSemantics: true,
-                  child: InkWell(
-                    onTap: onBasket,
-                    child: Container(
-                      color: Ember.green,
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          BounceOnChange(
-                            value: cart.count,
-                            child: Badge(
-                              isLabelVisible: cart.count > 0,
-                              label: Text('${cart.count}'),
-                              backgroundColor: Ember.orange,
-                              child: const Icon(
-                                Icons.shopping_basket_outlined,
-                                color: Colors.white,
-                                size: 42,
+                  child: Material(
+                    color: Ember.green,
+                    child: InkWell(
+                      onTap: onBasket,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 37, right: 8),
+                        child: Row(
+                          children: [
+                            BounceOnChange(
+                              value: cart.count,
+                              child: Badge(
+                                isLabelVisible: cart.count > 0,
+                                label: Text('${cart.count}'),
+                                backgroundColor: Ember.orange,
+                                child: const KitImage('basket', size: 45),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                app.price(cart.total),
-                                style: Ember.text(
-                                  16,
-                                  weight: FontWeight.w600,
-                                  color: Colors.white,
+                            const SizedBox(width: 17),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  app.price(cart.total),
+                                  style: Ember.text(
+                                    16,
+                                    weight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -241,17 +295,21 @@ class EmberHeader extends StatelessWidget {
           child: InkWell(
             onTap: onAddress,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 11, 34, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Icon(Icons.location_on, size: 24),
+                  const KitImage('location', size: 25),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(
-                      app.address.isEmpty ? app.t('no_address') : app.address,
-                      overflow: TextOverflow.ellipsis,
-                      style: Ember.text(14),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 190),
+                      child: Text(
+                        app.address.isEmpty ? app.t('no_address') : app.address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Ember.text(14),
+                      ),
                     ),
                   ),
                 ],
@@ -264,59 +322,49 @@ class EmberHeader extends StatelessWidget {
   }
 }
 
-/// Kit hamburger: three thick navy bars with rounded ends.
-class _Hamburger extends StatelessWidget {
-  const _Hamburger();
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < 3; i++)
-          Container(
-            width: 56,
-            height: 5,
-            margin: EdgeInsets.only(top: i == 0 ? 0 : 11),
-            decoration: BoxDecoration(
-              color: Ember.navy,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
-/// Navy discount badge with rounded bottom corners.
+/// Navy discount badge with rounded bottom corners (kit 46 x 38, radius 4).
 class DiscountBadge extends StatelessWidget {
   final num percent;
-  final double width, height, font;
+  final double width, height, font, radius;
   const DiscountBadge(
     this.percent, {
     super.key,
     this.width = 46,
     this.height = 38,
     this.font = 15,
+    this.radius = 4,
   });
   @override
   Widget build(BuildContext context) => Container(
-    width: width,
+    constraints: BoxConstraints(minWidth: width),
     height: height,
+    padding: const EdgeInsets.symmetric(horizontal: 4),
     alignment: Alignment.center,
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       color: Ember.navy,
-      borderRadius: BorderRadius.vertical(
-        bottom: Radius.circular(Ember.radius),
-      ),
+      borderRadius: BorderRadius.vertical(bottom: Radius.circular(radius)),
     ),
     child: Text(
-      '−$percent%',
+      '-$percent%',
       style: Ember.text(font, weight: FontWeight.w700, color: Colors.white),
     ),
   );
 }
 
-/// Mobile deal card (150x150 photo + text below).
+/// Kit photo gradient (clear -> navy) used on deal, partner and offer cards.
+/// [degrees] is the CSS linear-gradient angle from the design.
+LinearGradient kitPhotoGradient(double degrees) {
+  final r = (degrees - 90) * math.pi / 180;
+  final dx = math.cos(r), dy = math.sin(r);
+  return LinearGradient(
+    begin: Alignment(-dx, -dy),
+    end: Alignment(dx, dy),
+    colors: const [Color(0x00FFFFFF), Color(0x3003081F), Color(0xE303081F)],
+    stops: const [0.0094, 0.5169, 0.879],
+  );
+}
+
+/// Mobile deal card (kit: 150 x 150 photo, "Restaurant" + bold name below).
 class DealCardSmall extends StatelessWidget {
   final Map<String, dynamic> r;
   final VoidCallback onTap;
@@ -327,7 +375,7 @@ class DealCardSmall extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      label: '${r['name']}, −${r['discount_percent']}%',
+      label: '${r['name']}, -${r['discount_percent']}%',
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -345,12 +393,14 @@ class DealCardSmall extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       NetImage(r['cover_url'] ?? r['hero_image_url']),
-                      const DecoratedBox(
-                        decoration: BoxDecoration(gradient: Ember.dealGradient),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: kitPhotoGradient(245.7),
+                        ),
                       ),
                       if (numOf(r['discount_percent']) > 0)
                         Positioned(
-                          right: 16,
+                          right: 17,
                           top: 0,
                           child: DiscountBadge(r['discount_percent']),
                         ),
@@ -359,19 +409,33 @@ class DealCardSmall extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                app.t('restaurant_word'),
-                style: Ember.text(
-                  13,
-                  weight: FontWeight.w500,
-                  color: Ember.orange,
+              Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      app.t('restaurant_word'),
+                      style: Ember.text(
+                        13,
+                        weight: FontWeight.w500,
+                        color: Ember.orange,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${r['name']}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ember.text(
+                        14,
+                        weight: FontWeight.w700,
+                        color: Ember.navy,
+                        height: 17 / 14,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                '${r['name']}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Ember.text(14, weight: FontWeight.w600, height: 1.2),
               ),
             ],
           ),
@@ -381,7 +445,8 @@ class DealCardSmall extends StatelessWidget {
   }
 }
 
-/// Popular category tile: photo + navy footer, orange title, white count.
+/// Popular category tile (kit 189 x 211): photo + navy caption,
+/// bold orange title and white count.
 class CuisineTile extends StatelessWidget {
   final Map<String, dynamic> c;
   final VoidCallback onTap;
@@ -404,11 +469,9 @@ class CuisineTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Photo takes whatever the grid cell leaves after the caption,
-                // so large system fonts shrink the photo instead of overflowing.
                 Expanded(child: NetImage(c['image_url'])),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 8, 12, 9),
+                  padding: const EdgeInsets.fromLTRB(18, 8, 12, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -417,9 +480,10 @@ class CuisineTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Ember.text(
-                          15,
+                          13,
                           weight: FontWeight.w700,
                           color: Ember.orange,
+                          height: 1.3,
                         ),
                       ),
                       Text(
@@ -428,7 +492,7 @@ class CuisineTile extends StatelessWidget {
                         }),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Ember.text(12, color: Colors.white),
+                        style: Ember.text(13, color: Colors.white, height: 1.3),
                       ),
                     ],
                   ),
@@ -442,7 +506,7 @@ class CuisineTile extends StatelessWidget {
   }
 }
 
-/// Popular restaurant tile: photo + orange footer with white name.
+/// Popular restaurant tile (kit 122 x 156): logo + orange caption.
 class RestaurantTile extends StatelessWidget {
   final Map<String, dynamic> r;
   final VoidCallback onTap;
@@ -469,25 +533,26 @@ class RestaurantTile extends StatelessWidget {
             color: Ember.orange,
             child: Column(
               children: [
-                // kit: 122 x 156 tile, 104px photo + orange caption
                 SizedBox(
                   height: 104,
                   width: double.infinity,
                   child: NetImage(r['logo_url']),
                 ),
-                Container(
-                  height: 52,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text(
-                    '${r['name']}',
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: Ember.text(
-                      13,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.15,
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      '${r['name']}',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ember.text(
+                        13,
+                        weight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 16 / 13,
+                      ),
                     ),
                   ),
                 ),
@@ -497,6 +562,41 @@ class RestaurantTile extends StatelessWidget {
         ),
       ),
     ),
+  );
+}
+
+/// Horizontal row of [RestaurantTile]s with a bold title (kit "Popular Restaurants").
+class RestaurantStrip extends StatelessWidget {
+  final String title;
+  final List<Map<String, dynamic>> items;
+  final void Function(Map<String, dynamic>) onTap;
+  const RestaurantStrip({
+    super.key,
+    required this.title,
+    required this.items,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 21),
+        child: Text(title, style: Ember.text(16, weight: FontWeight.w700)),
+      ),
+      const SizedBox(height: 29),
+      SizedBox(
+        height: 156,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 21),
+          scrollDirection: Axis.horizontal,
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (_, i) =>
+              RestaurantTile(items[i], onTap: () => onTap(items[i])),
+        ),
+      ),
+    ],
   );
 }
 
@@ -550,7 +650,8 @@ class OrangeButton extends StatelessWidget {
   );
 }
 
-/// Green action button with white round arrow (kit "Checkout!" / "Next Step").
+/// Kit green action button (342 x 70, radius 8) with the white round arrow
+/// on the left — "Checkout!" / "Next Step".
 class GreenButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -559,42 +660,42 @@ class GreenButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
-    return Material(
-      color: enabled ? Ember.green : Ember.pink,
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(6),
-        child: SizedBox(
-          height: height,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 20,
-                child: Container(
-                  width: 35,
-                  height: 35,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward,
-                    color: enabled ? Ember.green : Ember.pink,
-                    size: 22,
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+      side: const BorderSide(color: Color(0x1C000000)),
+    );
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: Material(
+        color: Ember.green,
+        shape: shape,
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: shape,
+          child: SizedBox(
+            height: height,
+            child: Row(
+              children: [
+                const SizedBox(width: 20),
+                KitImage('forward_white', size: height > 60 ? 35 : 28),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 35, left: 8),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ember.text(
+                        height > 60 ? 24 : 18,
+                        weight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                label,
-                style: Ember.text(
-                  height > 60 ? 24 : 18,
-                  weight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -602,14 +703,106 @@ class GreenButton extends StatelessWidget {
   }
 }
 
-/// Kit popup: white card with orange round close button on the top-right corner.
-Future<T?> showEmberPopup<T>(BuildContext context, {required Widget child}) {
+/// Kit "Total to pay  £127.90" bar: 70 high, orange at 80%, radius 8.
+class TotalToPay extends StatelessWidget {
+  final String label, amount;
+  const TotalToPay({super.key, required this.label, required this.amount});
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 70),
+    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+    decoration: BoxDecoration(
+      color: const Color(0xCCFC8A06),
+      border: Border.all(color: const Color(0x1C000000)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: LabelValueRow(
+      label: Text(
+        label,
+        style: Ember.text(20, weight: FontWeight.w600, color: Colors.white),
+      ),
+      value: Text(
+        amount,
+        style: Ember.text(36, weight: FontWeight.w600, color: Colors.white),
+      ),
+    ),
+  );
+}
+
+/// Kit gray pill (#F6F6F6, 52 high) with a faded round arrow on the right:
+/// "Sort by Pricing", "Choose your free item..", "Apply Coupon Code here".
+class KitPill extends StatelessWidget {
+  final String label;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+  final double height;
+  final EdgeInsets padding;
+  const KitPill(
+    this.label, {
+    super.key,
+    this.onTap,
+    this.trailing,
+    this.height = 52,
+    this.padding = const EdgeInsets.only(left: 29, right: 12),
+  });
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Ember.section,
+    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFCFCFCF))),
+    child: InkWell(
+      onTap: onTap,
+      customBorder: const StadiumBorder(),
+      child: Container(
+        constraints: BoxConstraints(minHeight: height),
+        padding: padding,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Ember.text(16),
+              ),
+            ),
+            const SizedBox(width: 10),
+            trailing ?? const KitDownArrow(),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// The kit's faded round "forward" arrow turned to point down (30 x 30, 40%).
+class KitDownArrow extends StatelessWidget {
+  final double size;
+  const KitDownArrow({super.key, this.size = 30});
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: 0.4,
+    child: RotatedBox(
+      quarterTurns: 1,
+      child: KitImage('forward', size: size),
+    ),
+  );
+}
+
+/// Kit popup: white card (radius 12) over a near-black backdrop, with the
+/// orange round close button sticking out of the top-right corner.
+Future<T?> showEmberPopup<T>(
+  BuildContext context, {
+  required Widget child,
+  double inset = 19,
+  bool closeInside = false,
+}) {
   return showDialog<T>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.7),
+    barrierColor: Ember.backdrop,
     builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 40),
+      insetPadding: EdgeInsets.fromLTRB(inset, 56, inset, 32),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -623,18 +816,24 @@ Future<T?> showEmberPopup<T>(BuildContext context, {required Widget child}) {
             child: child,
           ),
           Positioned(
-            right: -14,
-            top: -24,
-            child: Material(
-              color: Ember.orange,
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () => Navigator.of(ctx).pop(),
-                child: const SizedBox(
-                  width: 58,
-                  height: 58,
-                  child: Icon(Icons.close, color: Colors.white, size: 34),
+            right: closeInside ? 22 : -14,
+            top: -35,
+            child: Semantics(
+              button: true,
+              label: MaterialLocalizations.of(ctx).closeButtonLabel,
+              child: Material(
+                color: Ember.orange,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => Navigator.of(ctx).pop(),
+                  child: SizedBox(
+                    width: closeInside ? 70 : 80,
+                    height: closeInside ? 70 : 80,
+                    child: Center(
+                      child: KitImage('close', size: closeInside ? 33 : 38),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -645,6 +844,7 @@ Future<T?> showEmberPopup<T>(BuildContext context, {required Widget child}) {
   );
 }
 
+/// Orange kit stars (empty ones gray).
 class Stars extends StatelessWidget {
   final num value;
   final double size;
@@ -654,16 +854,19 @@ class Stars extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     children: [
       for (var i = 1; i <= 5; i++)
-        Icon(
-          Icons.star_rounded,
-          size: size,
-          color: i <= value.round() ? Ember.orange : Ember.gray,
+        Padding(
+          padding: EdgeInsets.only(right: size * 0.18),
+          child: KitImage(
+            'star',
+            size: size,
+            color: i <= value.round() ? null : const Color(0xFFD9D9D9),
+          ),
         ),
     ],
   );
 }
 
-/// Red chilli scale 0–5.
+/// Kit chilli scale 0–5: tilted chillies, red for the level, gray for the rest.
 class SpiceLevel extends StatelessWidget {
   final int level;
   const SpiceLevel(this.level, {super.key});
@@ -671,14 +874,23 @@ class SpiceLevel extends StatelessWidget {
   Widget build(BuildContext context) {
     if (level <= 0) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
           for (var i = 1; i <= 5; i++)
-            Icon(
-              Icons.local_fire_department,
-              size: 18,
-              color: i <= level ? Ember.chili : const Color(0xFF8E8E8E),
+            SizedBox(
+              width: 18,
+              height: 27,
+              child: OverflowBox(
+                maxWidth: 27,
+                child: Transform.rotate(
+                  angle: -22.82 * math.pi / 180,
+                  child: KitImage(
+                    i <= level ? 'chili_red' : 'chili_gray',
+                    size: 20.6,
+                  ),
+                ),
+              ),
             ),
         ],
       ),
