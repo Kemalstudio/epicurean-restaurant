@@ -312,53 +312,74 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
     );
   }
 
+  /// Kit "Mobile Open Menu": white card (inset 30), menu icon + "Menu",
+  /// then one 83-high row per section, the chosen one navy.
   void _pickSection(BuildContext context, List<Map<String, dynamic>> sections) {
     final t = context.read<AppState>().t;
     showEmberPopup(
       context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(26, 32, 26, 20),
-            child: Row(
-              children: [
-                const Icon(Icons.menu_book, size: 42),
-                const SizedBox(width: 14),
-                Text(t('menu'), style: Ember.text(30, weight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          for (final s in [
-            <String, dynamic>{'id': 'all', 'name': t('all_dishes')},
-            ...sections,
-          ])
-            InkWell(
-              onTap: () {
-                setState(() => _section = s['id']);
-                Navigator.pop(context);
-              },
-              child: Container(
-                color: _section == s['id'] ? Ember.navy : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 26,
-                  vertical: 18,
-                ),
-                child: Text(
-                  '${s['name']}',
-                  style: Ember.text(
-                    20,
-                    weight: FontWeight.w700,
-                    color: _section == s['id']
-                        ? Colors.white
-                        : const Color(0xFF282828),
-                  ),
+      inset: 30,
+      showClose: false,
+      child: Container(
+        color: Ember.light,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(36, 50, 26, 46),
+                child: Row(
+                  children: [
+                    const KitImage('restaurant_menu', size: 50),
+                    const SizedBox(width: 23),
+                    Flexible(
+                      child: Text(
+                        t('menu'),
+                        style: Ember.text(32, weight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          const SizedBox(height: 16),
-        ],
+              for (final s in [
+                <String, dynamic>{'id': 'all', 'name': t('all_dishes')},
+                ...sections,
+              ])
+                Semantics(
+                  selected: _section == s['id'],
+                  button: true,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => _section = s['id']);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 67),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      color: _section == s['id'] ? Ember.navy : null,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 34,
+                        vertical: 12,
+                      ),
+                      child: Text(
+                        '${s['name']}',
+                        style: Ember.text(
+                          20,
+                          weight: FontWeight.w700,
+                          color: _section == s['id']
+                              ? Colors.white
+                              : const Color(0xFF282828),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -796,6 +796,7 @@ Future<T?> showEmberPopup<T>(
   required Widget child,
   double inset = 19,
   bool closeInside = false,
+  bool showClose = true,
 }) {
   return showDialog<T>(
     context: context,
@@ -815,29 +816,30 @@ Future<T?> showEmberPopup<T>(
             clipBehavior: Clip.antiAlias,
             child: child,
           ),
-          Positioned(
-            right: closeInside ? 22 : -14,
-            top: -35,
-            child: Semantics(
-              button: true,
-              label: MaterialLocalizations.of(ctx).closeButtonLabel,
-              child: Material(
-                color: Ember.orange,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => Navigator.of(ctx).pop(),
-                  child: SizedBox(
-                    width: closeInside ? 70 : 80,
-                    height: closeInside ? 70 : 80,
-                    child: Center(
-                      child: KitImage('close', size: closeInside ? 33 : 38),
+          if (showClose)
+            Positioned(
+              right: closeInside ? 22 : -14,
+              top: -35,
+              child: Semantics(
+                button: true,
+                label: MaterialLocalizations.of(ctx).closeButtonLabel,
+                child: Material(
+                  color: Ember.orange,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => Navigator.of(ctx).pop(),
+                    child: SizedBox(
+                      width: closeInside ? 70 : 80,
+                      height: closeInside ? 70 : 80,
+                      child: Center(
+                        child: KitImage('close', size: closeInside ? 33 : 38),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     ),

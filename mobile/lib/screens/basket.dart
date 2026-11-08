@@ -28,7 +28,7 @@ class BasketScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.schedule, color: Colors.white, size: 40),
+                const KitImage('clock', size: 46),
                 const SizedBox(width: 14),
                 Text(
                   '${cart.restaurant!['delivery_time'] ?? '30-40'} ${app.t('min_short')}',
@@ -177,8 +177,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Row(
                   children: [
                     for (final o in [
-                      ('delivery', Icons.delivery_dining, t('delivery')),
-                      ('collection', Icons.storefront, t('collection')),
+                      ('delivery', 'scooter', t('delivery')),
+                      ('collection', 'new_store', t('collection')),
                     ])
                       Expanded(
                         child: Padding(
@@ -203,12 +203,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               child: Column(
                                 children: [
-                                  Icon(
-                                    o.$2,
-                                    size: 34,
-                                    color: cart.fulfillment == o.$1
-                                        ? Ember.green
-                                        : Colors.black38,
+                                  Opacity(
+                                    opacity: cart.fulfillment == o.$1
+                                        ? 1
+                                        : 0.45,
+                                    child: KitImage(o.$2, size: 36),
                                   ),
                                   Text(
                                     o.$3,
@@ -322,11 +321,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       padding: const EdgeInsets.all(22),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.shopping_basket_outlined,
-                            color: Colors.white,
-                            size: 40,
-                          ),
+                          const KitImage('basket_full', size: 44),
                           const SizedBox(width: 16),
                           Flexible(
                             child: FittedBox(

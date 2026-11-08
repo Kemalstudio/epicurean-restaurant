@@ -39,11 +39,7 @@ class BasketView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Row(
               children: [
-                const Icon(
-                  Icons.shopping_basket_outlined,
-                  color: Colors.white,
-                  size: 58,
-                ),
+                const KitImage('basket_full', size: 62),
                 const SizedBox(width: 20),
                 Flexible(
                   child: FittedBox(
@@ -194,7 +190,7 @@ class BasketView extends StatelessWidget {
                 children: [
                   _FulfillmentTile(
                     value: 'delivery',
-                    icon: Icons.delivery_dining,
+                    icon: 'scooter',
                     label: t('delivery'),
                     sub: cart.restaurant?['delivery_time'] != null
                         ? '${cart.restaurant!['delivery_time']} ${t('min_short')}'
@@ -208,7 +204,7 @@ class BasketView extends StatelessWidget {
                   ),
                   _FulfillmentTile(
                     value: 'collection',
-                    icon: Icons.storefront,
+                    icon: 'new_store',
                     label: t('collection'),
                     sub: t('collection_sub'),
                   ),
@@ -350,13 +346,13 @@ class _Line extends StatelessWidget {
                 Row(
                   children: [
                     _qtyButton(
-                      Icons.remove,
+                      'minus',
                       () => cart.setQuantity(item, item.quantity - 1),
                       app.t('decrease_quantity'),
                     ),
                     const SizedBox(width: 8),
                     _qtyButton(
-                      Icons.add,
+                      'plus',
                       () => cart.setQuantity(item, item.quantity + 1),
                       app.t('increase_quantity'),
                     ),
@@ -368,43 +364,26 @@ class _Line extends StatelessWidget {
           IconButton(
             onPressed: () => cart.setQuantity(item, 0),
             tooltip: app.t('remove_item'),
-            icon: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8E8E8E),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.close, color: Colors.white, size: 22),
-            ),
+            icon: const KitImage('remove_gray', size: 35),
           ),
         ],
       ),
     );
   }
 
-  Widget _qtyButton(IconData icon, VoidCallback onTap, String tooltip) =>
-      Tooltip(
-        message: tooltip,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Container(
-            width: 30,
-            height: 30,
-            decoration: const BoxDecoration(
-              color: Ember.navy,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white, size: 16),
-          ),
-        ),
-      );
+  Widget _qtyButton(String icon, VoidCallback onTap, String tooltip) => Tooltip(
+    message: tooltip,
+    child: InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: KitImage(icon, size: 30),
+    ),
+  );
 }
 
 class _FulfillmentTile extends StatelessWidget {
   final String value, label, sub;
-  final IconData icon;
+  final String icon;
   const _FulfillmentTile({
     required this.value,
     required this.icon,
@@ -433,10 +412,9 @@ class _FulfillmentTile extends StatelessWidget {
                 : null,
             child: Column(
               children: [
-                Icon(
-                  icon,
-                  size: 35,
-                  color: active ? Ember.green : Colors.black38,
+                Opacity(
+                  opacity: active ? 1 : 0.45,
+                  child: KitImage(icon, size: 38),
                 ),
                 Text(
                   label,
@@ -551,19 +529,7 @@ class _PromoFieldState extends State<_PromoField> {
               Expanded(
                 child: Text(app.t('apply_coupon'), style: Ember.text(15)),
               ),
-              Container(
-                width: 30,
-                height: 30,
-                decoration: const BoxDecoration(
-                  color: Ember.green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
+              const KitImage('forward_green', size: 30),
             ],
           ),
         ),

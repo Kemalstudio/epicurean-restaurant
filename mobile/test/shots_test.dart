@@ -27,25 +27,40 @@ final shots = <String, (double, Widget Function())>{
   'home': (7000, () => const HomeScreen()),
   'restaurant': (8000, () => const RestaurantScreen(slug: 'napoli-wood-fire')),
   'basket': (1800, () => const BasketScreen()),
-  'menu_drawer': (1000, () => const Scaffold(body: SizedBox(), endDrawer: AppMenu())),
+  'section_picker': (
+    1000,
+    () => const RestaurantScreen(slug: 'napoli-wood-fire'),
+  ),
+  'menu_drawer': (
+    1000,
+    () => const Scaffold(body: SizedBox(), endDrawer: AppMenu()),
+  ),
 };
 
 void main() {
   setUpAll(() async {
     await loadAppFonts();
-    final sdk = File(Platform.resolvedExecutable).parent.parent.parent.parent.path;
-    final icons = File('$sdk/artifacts/material_fonts/materialicons-regular.otf');
+    final sdk = File(
+      Platform.resolvedExecutable,
+    ).parent.parent.parent.parent.path;
+    final icons = File(
+      '$sdk/artifacts/material_fonts/materialicons-regular.otf',
+    );
     if (icons.existsSync()) {
-      await (FontLoader('MaterialIcons')..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync())))).load();
+      await (FontLoader('MaterialIcons')..addFont(
+            Future.value(ByteData.sublistView(icons.readAsBytesSync())),
+          ))
+          .load();
     }
     NetImage.builderForTests = (url, fit, w, h) => Image.file(
-          File('../public$url'),
-          fit: fit,
-          width: w,
-          height: h,
-          cacheWidth: 600,
-          errorBuilder: (_, _, _) => Container(width: w, height: h, color: Ember.gray),
-        );
+      File('../public$url'),
+      fit: fit,
+      width: w,
+      height: h,
+      cacheWidth: 600,
+      errorBuilder: (_, _, _) =>
+          Container(width: w, height: h, color: Ember.gray),
+    );
     Api.instance.client = mockApi();
   });
 
@@ -64,32 +79,58 @@ void main() {
           cart.add(
             product: Map<String, dynamic>.from(p),
             restaurantData: r,
-            size: ((p['sizes'] as List?)?.isNotEmpty ?? false) ? p['sizes'][0]['name'] : null,
+            size: ((p['sizes'] as List?)?.isNotEmpty ?? false)
+                ? p['sizes'][0]['name']
+                : null,
           );
         }
       }
       final key = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(
-        key: key,
-        child: MultiProvider(
-          providers: [ChangeNotifierProvider.value(value: app), ChangeNotifierProvider.value(value: cart)],
-          child: MaterialApp(debugShowCheckedModeBanner: false, theme: Ember.theme(), home: e.value.$2()),
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: app),
+              ChangeNotifierProvider.value(value: cart),
+            ],
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: Ember.theme(),
+              home: e.value.$2(),
+            ),
+          ),
         ),
-      ));
+      );
       for (var i = 0; i < 8; i++) {
-        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 250)));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 250)),
+        );
         await tester.pump(const Duration(milliseconds: 300));
       }
+      if (e.key == 'section_picker') {
+        await tester.ensureVisible(find.text('All dishes').first);
+        await tester.pump();
+        await tester.tap(find.text('All dishes').first);
+        for (var i = 0; i < 4; i++) {
+          await tester.pump(const Duration(milliseconds: 200));
+        }
+      }
       if (e.key == 'menu_drawer') {
-        tester.state<ScaffoldState>(find.byType(Scaffold).first).openEndDrawer();
+        tester
+            .state<ScaffoldState>(find.byType(Scaffold).first)
+            .openEndDrawer();
         await tester.pump(const Duration(milliseconds: 600));
       }
-      final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final boundary =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
       await tester.runAsync(() async {
         final img = await boundary.toImage();
         final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
         Directory(outDir).createSync(recursive: true);
-        File('$outDir/${e.key}.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+        File(
+          '$outDir/${e.key}.png',
+        ).writeAsBytesSync(bytes!.buffer.asUint8List());
       });
       tester.view.resetPhysicalSize();
     });
