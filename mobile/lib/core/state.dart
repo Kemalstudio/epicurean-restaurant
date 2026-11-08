@@ -15,6 +15,9 @@ class AppState extends ChangeNotifier {
   String lang = 'en';
   Map<String, dynamic>? user;
   String address = '';
+
+  /// Saved addresses (kit "My Address"): {label: home|work|other, address, street, post_code, apartment}.
+  List<Map<String, String>> addresses = [];
   bool ready = false;
 
   bool get isLoggedIn => user != null;
@@ -26,6 +29,17 @@ class AppState extends ChangeNotifier {
         _prefs.getString('lang') ??
         (['ru', 'tk'].contains(deviceLang) ? deviceLang : 'en');
     address = _prefs.getString('address') ?? '';
+    try {
+      addresses = [
+        for (final a
+            in jsonDecode(_prefs.getString('addresses') ?? '[]') as List)
+          Map<String, String>.from(
+            (a as Map).map((k, v) => MapEntry('$k', '$v')),
+          ),
+      ];
+    } catch (_) {
+      addresses = [];
+    }
     Api.instance.lang = lang;
     Api.instance.token = _prefs.getString('token');
     if (Api.instance.token != null) {
@@ -71,6 +85,31 @@ class AppState extends ChangeNotifier {
     await _prefs.setString('address', value);
     notifyListeners();
   }
+
+  /// Saves (or replaces at [index]) an address and makes it the delivery one.
+  Future<void> saveAddress(Map<String, String> a, {int? index}) async {
+    if (index != null && index >= 0 && index < addresses.length) {
+      addresses[index] = a;
+    } else {
+      addresses.add(a);
+    }
+    await _prefs.setString('addresses', jsonEncode(addresses));
+    await setAddress(fullAddress(a));
+  }
+
+  Future<void> deleteAddress(int index) async {
+    addresses.removeAt(index);
+    await _prefs.setString('addresses', jsonEncode(addresses));
+    notifyListeners();
+  }
+
+  /// "Street 7, apt 12, 744000" from the saved parts.
+  static String fullAddress(Map<String, String> a) => [
+    a['address'],
+    a['street'],
+    if ((a['apartment'] ?? '').isNotEmpty) '№ ${a['apartment']}',
+    a['post_code'],
+  ].where((x) => (x ?? '').trim().isNotEmpty).join(', ');
 
   Future<void> signedIn(Map<String, dynamic> res) async {
     final token = res['access_token'] as String?;

@@ -285,6 +285,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _name = TextEditingController(),
       _email = TextEditingController(),
       _password = TextEditingController(),
+      _password2 = TextEditingController(),
       _code = TextEditingController();
   bool _busy = false, _otp = false;
   String? _error;
@@ -314,42 +315,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
         subtitle: t('code_sent_to', {'email': _email.text.trim()}),
         children: [
           _errorText(_error),
-          Text(
-            t('code').toUpperCase(),
-            style: Ember.text(13, color: Ember.text1),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _code,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            textAlign: TextAlign.center,
-            autofillHints: const [AutofillHints.oneTimeCode],
-            style: Ember.text(
-              26,
-              weight: FontWeight.w700,
-              color: Ember.navy,
-            ).copyWith(letterSpacing: 14),
-            decoration: const InputDecoration(counterText: ''),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => _run(() async {
-                await Api.instance.resendOtp(_email.text.trim());
-                if (context.mounted) showMessage(context, t('new_code_sent'));
-              }),
-              child: Text(
-                t('resend'),
-                style: Ember.text(
-                  14,
-                  weight: FontWeight.w700,
-                  color: Ember.navy,
-                ).copyWith(decoration: TextDecoration.underline),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  t('code').toUpperCase(),
+                  style: Ember.text(13, color: Ember.text1),
+                ),
               ),
-            ),
+              InkWell(
+                onTap: () => _run(() async {
+                  await Api.instance.resendOtp(_email.text.trim());
+                  if (context.mounted) {
+                    showMessage(context, t('new_code_sent'));
+                  }
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Text(
+                    t('resend'),
+                    style: Ember.text(
+                      14,
+                      weight: FontWeight.w700,
+                      color: Ember.navy,
+                    ).copyWith(decoration: TextDecoration.underline),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
+          _CodeBoxes(controller: _code),
+          const SizedBox(height: 30),
           PrimaryButton(
             t('verify_account'),
             loading: _busy,
@@ -394,6 +391,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 6),
         Text(t('password_hint'), style: Ember.text(12, color: Ember.text2)),
+        _gap(),
+        _PasswordField(
+          controller: _password2,
+          label: t('confirm_password'),
+          newPassword: true,
+        ),
         const SizedBox(height: 32),
         PrimaryButton(
           t('sign_up'),
@@ -401,6 +404,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => _run(() async {
             if (_password.text.length < 8) {
               throw ApiError(400, t('password_too_short'));
+            }
+            if (_password.text != _password2.text) {
+              throw ApiError(400, t('passwords_mismatch'));
             }
             await Api.instance.register(
               _name.text.trim(),
@@ -410,18 +416,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
             setState(() => _otp = true);
           }),
         ),
-        const SizedBox(height: 20),
-        _switchLine(
-          t('have_account'),
-          t('log_in'),
-          () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          ),
-        ),
       ],
     );
   }
+}
+
+/// Kit verification code: a row of light gray boxes over one hidden field.
+class _CodeBoxes extends StatefulWidget {
+  final TextEditingController controller;
+  const _CodeBoxes({required this.controller});
+  @override
+  State<_CodeBoxes> createState() => _CodeBoxesState();
+}
+
+class _CodeBoxesState extends State<_CodeBoxes> {
+  final _focus = FocusNode();
+  static const _len = 6;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: () => _focus.requestFocus(),
+    child: Stack(
+      children: [
+        // The real input: invisible, but focusable and autofill-friendly
+        Opacity(
+          opacity: 0,
+          child: TextField(
+            controller: widget.controller,
+            focusNode: _focus,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            maxLength: _len,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(counterText: ''),
+          ),
+        ),
+        IgnorePointer(
+          child: Row(
+            children: [
+              for (var i = 0; i < _len; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Ember.field,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color:
+                              _focus.hasFocus &&
+                                  widget.controller.text.length == i
+                              ? Ember.orange
+                              : Ember.field,
+                        ),
+                      ),
+                      child: Text(
+                        i < widget.controller.text.length
+                            ? widget.controller.text[i]
+                            : '',
+                        style: Ember.text(
+                          16,
+                          weight: FontWeight.w700,
+                          color: Ember.navy,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class ForgotScreen extends StatefulWidget {

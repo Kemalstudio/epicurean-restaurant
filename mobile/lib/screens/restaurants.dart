@@ -72,24 +72,28 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
         ? t('offers_page_title')
         : (widget.title ?? t('restaurants_page_title'));
     return EmberScaffold(
-      header: TopBar(
-        title: title,
-        trailing: CartButton(onTap: () => openBasket(context)),
-      ),
+      header: widget.search || widget.offersOnly
+          ? TopBar(
+              title: title,
+              trailing: CartButton(onTap: () => openBasket(context)),
+            )
+          : _categoryBar(),
       onRefresh: () async => setState(_load),
       children: [
-        const SizedBox(height: 24),
-        SearchField(
-          hint: t('search_dishes'),
-          controller: _q,
-          autofocus: widget.search,
-          onChanged: (_) => setState(_load),
-          onSubmitted: (_) => setState(_load),
-        ),
-        const SizedBox(height: 24),
-        Text(t('all_categories'), style: Ember.text(20, color: Ember.text1)),
-        const SizedBox(height: 12),
-        _keywords(),
+        if (widget.search || widget.offersOnly) ...[
+          const SizedBox(height: 24),
+          SearchField(
+            hint: t('search_dishes'),
+            controller: _q,
+            autofocus: widget.search,
+            onChanged: (_) => setState(_load),
+            onSubmitted: (_) => setState(_load),
+          ),
+          const SizedBox(height: 24),
+          Text(t('all_categories'), style: Ember.text(20, color: Ember.text1)),
+          const SizedBox(height: 12),
+          _keywords(),
+        ],
         const SizedBox(height: 32),
         FutureBuilder<List<dynamic>>(
           future: _future,
@@ -148,6 +152,100 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
       ],
     );
   }
+
+  /// Kit "Food - Burgers" top row: back, the category pill with ▾ (opens a
+  /// picker), then the dark search button.
+  Widget _categoryBar() => FutureBuilder<Map<String, dynamic>>(
+    future: _home,
+    builder: (context, snap) {
+      final t = context.read<AppState>().t;
+      final cuisines = List<Map<String, dynamic>>.from(
+        ((snap.data?['cuisines'] as List?) ?? []).map(
+          (e) => Map<String, dynamic>.from(e),
+        ),
+      );
+      final current = cuisines
+          .where((c) => c['slug'] == _cuisine)
+          .map((c) => '${c['name']}')
+          .firstOrNull;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+        child: Row(
+          children: [
+            const BackButtonKit(),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: PopupMenuButton<String?>(
+                  tooltip: t('all_categories'),
+                  onSelected: (v) => setState(() {
+                    _cuisine = v;
+                    _load();
+                  }),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(value: null, child: Text(t('filter_all'))),
+                    for (final c in cuisines)
+                      PopupMenuItem(
+                        value: '${c['slug']}',
+                        child: Text('${c['name']}'),
+                      ),
+                  ],
+                  child: Container(
+                    height: 45,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 6, 0),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0xFFECF0F4),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(33),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            (current ?? widget.title ?? t('filter_all'))
+                                .toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Ember.text(
+                              12,
+                              weight: FontWeight.w700,
+                              color: Ember.navy,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: Ember.orange,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            RoundButton(
+              color: Ember.navy,
+              tooltip: t('search'),
+              onTap: () => go(context, const RestaurantsScreen(search: true)),
+              icon: const Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            CartButton(onTap: () => openBasket(context)),
+          ],
+        ),
+      );
+    },
+  );
 
   /// Category chips ("Recent Keywords" style); tapping one filters the list.
   Widget _keywords() => FutureBuilder<Map<String, dynamic>>(

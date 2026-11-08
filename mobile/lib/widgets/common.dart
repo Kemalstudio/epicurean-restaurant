@@ -594,7 +594,7 @@ class KitField extends StatelessWidget {
   final TextInputType? keyboard;
   final String? Function(String?)? validator;
   final int maxLines;
-  final Widget? suffix;
+  final Widget? suffix, prefix;
   final Iterable<String>? autofill;
   final TextInputAction? action;
   final ValueChanged<String>? onSubmitted;
@@ -608,6 +608,7 @@ class KitField extends StatelessWidget {
     this.validator,
     this.maxLines = 1,
     this.suffix,
+    this.prefix,
     this.autofill,
     this.action,
     this.onSubmitted,
@@ -628,7 +629,11 @@ class KitField extends StatelessWidget {
         textInputAction: action,
         onFieldSubmitted: onSubmitted,
         style: Ember.text(14, color: Ember.navy),
-        decoration: InputDecoration(hintText: hint, suffixIcon: suffix),
+        decoration: InputDecoration(
+          hintText: hint,
+          suffixIcon: suffix,
+          prefixIcon: prefix,
+        ),
       ),
     ],
   );

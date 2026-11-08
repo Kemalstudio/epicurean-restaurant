@@ -181,7 +181,7 @@ class ProfileScreen extends StatelessWidget {
               Icons.person_outline_rounded,
               Ember.orange,
               t('personal_info'),
-              () => _showInfo(context),
+              () => go(context, const PersonalInfoScreen()),
             ),
           row(
             Icons.map_outlined,
@@ -271,42 +271,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showInfo(BuildContext context) {
-    final app = context.read<AppState>();
-    final u = app.user ?? {};
-    showEmberPopup(
-      context,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              app.t('personal_info'),
-              style: Ember.text(20, weight: FontWeight.w700, color: Ember.navy),
-            ),
-            const SizedBox(height: 20),
-            for (final e in [
-              (app.t('full_name'), u['name']),
-              (app.t('email'), u['email']),
-              (app.t('phone'), u['phone']),
-            ])
-              if ('${e.$2 ?? ''}'.isNotEmpty) ...[
-                Text(
-                  e.$1.toUpperCase(),
-                  style: Ember.text(13, color: Ember.text1),
-                ),
-                const SizedBox(height: 4),
-                Text('${e.$2}', style: Ember.text(16, color: Ember.text2)),
-                const SizedBox(height: 16),
-              ],
-          ],
-        ),
-      ),
-    );
-  }
-
   void _pickLanguage(BuildContext context) {
     final app = context.read<AppState>();
     showEmberPopup(
@@ -348,86 +312,450 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-/// Delivery address popup in the kit form style.
-Future<void> showAddressPopup(BuildContext context) {
-  final app = context.read<AppState>();
-  final cart = context.read<CartState>();
-  final ctrl = TextEditingController(text: app.address);
-  var error = false; // lives outside the builder so it survives setState
-  return showEmberPopup(
-    context,
-    child: StatefulBuilder(
-      builder: (ctx, setState) {
-        void submit() {
-          if (ctrl.text.trim().length < 3) {
-            setState(() => error = true);
-            return;
-          }
-          app.setAddress(ctrl.text.trim());
-          cart.setFulfillment('delivery');
-          Navigator.pop(ctx);
-        }
+/// Opens the kit "My Address" screen (home "Deliver to", cart, profile).
+Future<void> showAddressPopup(BuildContext context) =>
+    go(context, const AddressesScreen());
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+IconData _labelIcon(String? label) => switch (label) {
+  'home' => Icons.home_outlined,
+  'work' => Icons.work_outline_rounded,
+  _ => Icons.location_on_outlined,
+};
+
+Color _labelColor(String? label) => switch (label) {
+  'home' => const Color(0xFF2790C3),
+  'work' => const Color(0xFFA03BB1),
+  _ => Ember.orange,
+};
+
+/// Kit "My Address": saved address cards (icon, label, address, edit /
+/// delete) and ADD NEW ADDRESS. Tapping a card makes it the delivery address.
+class AddressesScreen extends StatelessWidget {
+  const AddressesScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    final cart = context.read<CartState>();
+    final t = app.t;
+    return EmberScaffold(
+      header: TopBar(title: t('my_address')),
+      bottom: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          8,
+          24,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: PrimaryButton(
+          t('add_new_address'),
+          onPressed: () => go(context, const AddAddressScreen()),
+        ),
+      ),
+      children: [
+        const SizedBox(height: 24),
+        if (app.addresses.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 64,
+                  color: Ember.text2,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  t('no_addresses'),
+                  textAlign: TextAlign.center,
+                  style: Ember.text(16, color: Ember.text2),
+                ),
+              ],
+            ),
+          ),
+        for (var i = 0; i < app.addresses.length; i++)
+          Builder(
+            builder: (context) {
+              final a = app.addresses[i];
+              final full = AppState.fullAddress(a);
+              final chosen = full == app.address;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Material(
+                  color: Ember.field,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      app.setAddress(full);
+                      cart.setFulfillment('delivery');
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 12, 18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: chosen ? Ember.orange : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _labelIcon(a['label']),
+                              color: _labelColor(a['label']),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t(
+                                    'label_${a['label'] ?? 'other'}',
+                                  ).toUpperCase(),
+                                  style: Ember.text(14, color: Ember.navy),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  full,
+                                  style: Ember.text(
+                                    14,
+                                    color: Ember.navy.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: t('edit'),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => go(
+                              context,
+                              AddAddressScreen(index: i, initial: a),
+                            ),
+                            icon: const Icon(
+                              Icons.edit_note_rounded,
+                              color: Ember.orange,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: t('delete'),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => app.deleteAddress(i),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Ember.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// Kit "Add New Address": address, street + post code, apartment, the
+/// Home / Work / Other label and SAVE LOCATION.
+class AddAddressScreen extends StatefulWidget {
+  final int? index;
+  final Map<String, String>? initial;
+  const AddAddressScreen({super.key, this.index, this.initial});
+  @override
+  State<AddAddressScreen> createState() => _AddAddressScreenState();
+}
+
+class _AddAddressScreenState extends State<AddAddressScreen> {
+  final _form = GlobalKey<FormState>();
+  late final _address = TextEditingController(
+    text: widget.initial?['address'] ?? '',
+  );
+  late final _street = TextEditingController(
+    text: widget.initial?['street'] ?? '',
+  );
+  late final _post = TextEditingController(
+    text: widget.initial?['post_code'] ?? '',
+  );
+  late final _apartment = TextEditingController(
+    text: widget.initial?['apartment'] ?? '',
+  );
+  late String _label = widget.initial?['label'] ?? 'home';
+
+  @override
+  void dispose() {
+    for (final c in [_address, _street, _post, _apartment]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_form.currentState!.validate()) return;
+    final app = context.read<AppState>();
+    final cart = context.read<CartState>();
+    await app.saveAddress({
+      'label': _label,
+      'address': _address.text.trim(),
+      'street': _street.text.trim(),
+      'post_code': _post.text.trim(),
+      'apartment': _apartment.text.trim(),
+    }, index: widget.index);
+    cart.setFulfillment('delivery');
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<AppState>().t;
+    return EmberScaffold(
+      header: TopBar(title: t('add_new_address')),
+      bottom: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          8,
+          24,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: PrimaryButton(t('save_location'), onPressed: _save),
+      ),
+      children: [
+        const SizedBox(height: 24),
+        Form(
+          key: _form,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 40),
-                child: Text(
-                  app.t('enter_address_title'),
-                  style: Ember.text(
-                    20,
-                    weight: FontWeight.w700,
-                    color: Ember.navy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                app.t('enter_address_desc'),
-                style: Ember.text(14, color: Ember.text2),
-              ),
-              const SizedBox(height: 24),
               KitField(
-                label: app.t('delivery_address'),
-                controller: ctrl,
-                hint: app.t('address_placeholder'),
-                action: TextInputAction.done,
-                onSubmitted: (_) => submit(),
-              ),
-              if (error)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    app.t('address_too_short'),
-                    style: Ember.text(13, color: Ember.red),
-                  ),
+                label: t('address_word'),
+                controller: _address,
+                hint: t('address_placeholder'),
+                autofill: const [AutofillHints.fullStreetAddress],
+                prefix: const Icon(
+                  Icons.location_on_rounded,
+                  color: Color(0xFF6B6E82),
                 ),
+                validator: (v) => (v == null || v.trim().length < 3)
+                    ? t('address_too_short')
+                    : null,
+              ),
               const SizedBox(height: 24),
-              PrimaryButton(app.t('save'), onPressed: submit),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  cart.setFulfillment('collection');
-                  Navigator.pop(ctx);
-                },
-                child: Text(
-                  app.t('i_will_collect'),
-                  style: Ember.text(
-                    14,
-                    weight: FontWeight.w700,
-                    color: Ember.orange,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: KitField(label: t('street'), controller: _street),
                   ),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: KitField(
+                      label: t('post_code'),
+                      controller: _post,
+                      keyboard: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              KitField(label: t('apartment'), controller: _apartment),
+              const SizedBox(height: 24),
+              Text(
+                t('label_as').toUpperCase(),
+                style: Ember.text(13, color: Ember.text1),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final l in ['home', 'work', 'other'])
+                    _LabelChip(
+                      t('label_$l'),
+                      selected: _label == l,
+                      onTap: () => setState(() => _label = l),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Kit "Label as" chip: light gray pill, orange with white text when chosen.
+class _LabelChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LabelChip(this.label, {required this.selected, required this.onTap});
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    child: Material(
+      color: selected ? Ember.orange : Ember.field,
+      shape: const StadiumBorder(),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Container(
+          height: 45,
+          constraints: const BoxConstraints(minWidth: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          child: Center(
+            widthFactor: 1,
+            child: Text(
+              label,
+              style: Ember.text(
+                14,
+                color: selected ? Colors.white : Ember.navy,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Kit "Personal Info": avatar, name, then a gray panel with full name,
+/// email and phone rows.
+class PersonalInfoScreen extends StatelessWidget {
+  const PersonalInfoScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    final t = app.t;
+    final u = app.user ?? {};
+    final name = '${u['name'] ?? u['email'] ?? t('guest')}';
+    Widget row(IconData icon, Color color, String label, String value) =>
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label.toUpperCase(),
+                      style: Ember.text(14, color: Ember.navy),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: Ember.text(14, color: const Color(0xFF6B6E82)),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         );
-      },
-    ),
+    return EmberScaffold(
+      header: TopBar(title: t('personal_info')),
+      children: [
+        const SizedBox(height: 24),
+        _ProfileHead(name: name, subtitle: '${u['email'] ?? ''}'),
+        const SizedBox(height: 32),
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          decoration: BoxDecoration(
+            color: Ember.panel,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              row(
+                Icons.person_outline_rounded,
+                Ember.orange,
+                t('full_name'),
+                '${u['name'] ?? '—'}',
+              ),
+              row(
+                Icons.mail_outline_rounded,
+                const Color(0xFF413DFB),
+                t('email'),
+                '${u['email'] ?? '—'}',
+              ),
+              if ('${u['phone'] ?? ''}'.isNotEmpty)
+                row(
+                  Icons.phone_outlined,
+                  const Color(0xFF369BFF),
+                  t('phone_number'),
+                  '${u['phone']}',
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Peach avatar circle with the initial, name and a gray line.
+class _ProfileHead extends StatelessWidget {
+  final String name, subtitle;
+  const _ProfileHead({required this.name, required this.subtitle});
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 100,
+        height: 100,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: Ember.peach,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          name.characters.first.toUpperCase(),
+          style: Ember.text(40, weight: FontWeight.w700, color: Colors.white),
+        ),
+      ),
+      const SizedBox(width: 32),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Ember.text(20, weight: FontWeight.w700, color: Ember.navy),
+            ),
+            const SizedBox(height: 8),
+            Text(subtitle, style: Ember.text(14, color: Ember.text2)),
+          ],
+        ),
+      ),
+    ],
   );
 }
 

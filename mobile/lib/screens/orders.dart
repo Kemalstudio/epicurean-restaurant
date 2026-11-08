@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../widgets/animated.dart';
 import '../widgets/common.dart';
 import '../widgets/product.dart';
+import 'restaurant.dart';
 import 'shell.dart';
 
 const _steps = [
@@ -46,12 +47,13 @@ class OrderSuccessScreen extends StatelessWidget {
         ),
       ),
       children: [
+        SizedBox(height: MediaQuery.sizeOf(context).height * 0.12),
         const Center(
-          child: EmberLottie(EmberAnim.success, size: 200, repeat: false),
+          child: EmberLottie(EmberAnim.success, size: 175, repeat: false),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         Text(
-          t('order_confirmed'),
+          t('congratulations'),
           textAlign: TextAlign.center,
           style: Ember.text(24, weight: FontWeight.w800, color: Ember.navy),
         ),
@@ -61,58 +63,11 @@ class OrderSuccessScreen extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Ember.text(16, color: Ember.text2, height: 1.5),
         ),
-        const SizedBox(height: 32),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Ember.panel,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              LabelValueRow(
-                label: Text(
-                  '${order['restaurant_name'] ?? ''}',
-                  style: Ember.text(14, color: Ember.text3),
-                ),
-                value: Text(
-                  shortPrice(app, numOf(order['total'])),
-                  style: Ember.text(
-                    16,
-                    weight: FontWeight.w700,
-                    color: Ember.navy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.access_time_rounded,
-                    color: Ember.orange,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      order['fulfillment'] == 'collection'
-                          ? t('ready_for_pickup')
-                          : t('estimated_delivery'),
-                      style: Ember.text(14, color: Ember.text3),
-                    ),
-                  ),
-                  Text(
-                    '${order['estimated_delivery'] ?? t('delivery_time_value')}',
-                    style: Ember.text(
-                      14,
-                      weight: FontWeight.w700,
-                      color: Ember.navy,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        const SizedBox(height: 6),
+        Text(
+          '${order['fulfillment'] == 'collection' ? t('ready_for_pickup') : t('estimated_delivery')}: ${order['estimated_delivery'] ?? t('delivery_time_value')}',
+          textAlign: TextAlign.center,
+          style: Ember.text(16, color: Ember.text2, height: 1.5),
         ),
         if (!app.isLoggedIn) ...[
           const SizedBox(height: 16),
@@ -294,6 +249,128 @@ class _OrdersScreenState extends State<OrdersScreen> {
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
   const _OrderCard({required this.order});
+
+  /// "29 JAN, 12:30" (month from the app's month names).
+  static String _date(AppState app, dynamic iso) {
+    final d = DateTime.tryParse('${iso ?? ''}')?.toLocal();
+    if (d == null) return '';
+    final m = app.t('months').split(',')[d.month - 1];
+    final mon = (m.length > 3 ? m.substring(0, 3) : m).toUpperCase();
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${d.day} $mon, ${two(d.hour)}:${two(d.minute)}';
+  }
+
+  /// Loads the restaurant of this order (for Rate / Re-Order).
+  Future<Map<String, dynamic>?> _restaurant(BuildContext context) async {
+    final slug = order['restaurant_slug'];
+    if (slug == null) return null;
+    try {
+      return await Api.instance.restaurant('$slug');
+    } on ApiError catch (e) {
+      if (context.mounted) showMessage(context, e.message, error: true);
+      return null;
+    }
+  }
+
+  Future<void> _rate(BuildContext context) async {
+    final r = await _restaurant(context);
+    if (r != null && context.mounted) go(context, RestaurantInfoScreen(r: r));
+  }
+
+  /// Puts the same dishes back into the basket and opens it.
+  Future<void> _reorder(BuildContext context) async {
+    final app = context.read<AppState>();
+    final cart = context.read<CartState>();
+    final r = await _restaurant(context);
+    if (r == null || !context.mounted) return;
+    final names = <String, Map<String, dynamic>>{};
+    try {
+      for (final i in await Api.instance.ingredients()) {
+        names['${i['id']}'] = Map<String, dynamic>.from(i);
+      }
+    } catch (_) {}
+    if (!context.mounted) return;
+    final products = {
+      for (final p in (r['products'] as List? ?? const []))
+        '${p['id']}': Map<String, dynamic>.from(p),
+    };
+    final lines = ((order['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .where((i) => products.containsKey('${i['product_id']}'))
+        .toList();
+    if (lines.isEmpty) {
+      showMessage(context, app.t('reorder_unavailable'), error: true);
+      return;
+    }
+    var replace = false;
+    if (cart.items.isNotEmpty) {
+      final ok = await showEmberPopup<bool>(
+        context,
+        child: Builder(
+          builder: (ctx) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 36, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  app.t('new_basket_title'),
+                  textAlign: TextAlign.center,
+                  style: Ember.text(
+                    20,
+                    weight: FontWeight.w700,
+                    color: Ember.navy,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  app.t('start_new_basket'),
+                  onPressed: () => Navigator.pop(ctx, true),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(
+                    app.t('keep_basket'),
+                    style: Ember.text(
+                      14,
+                      weight: FontWeight.w700,
+                      color: Ember.orange,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (ok != true || !context.mounted) return;
+      replace = true;
+    }
+    Map<String, dynamic> ing(dynamic id) => {
+      'id': '$id',
+      'name': names['$id']?['name'] ?? '$id',
+      'price': names['$id']?['price'] ?? 0,
+    };
+    for (final i in lines) {
+      cart.add(
+        product: products['${i['product_id']}']!,
+        restaurantData: r,
+        size: i['size'] as String?,
+        quantity: numOf(i['quantity'], 1).toInt(),
+        added: [
+          for (final id in (i['added_ingredient_ids'] as List?) ?? []) ing(id),
+        ],
+        removed: [
+          for (final id in (i['removed_ingredient_ids'] as List?) ?? [])
+            ing(id),
+        ],
+        replace: replace,
+      );
+      replace = false;
+    }
+    openBasket(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -309,6 +386,7 @@ class _OrderCard extends StatelessWidget {
         .map((i) => i['product_image'])
         .firstWhere((x) => x != null, orElse: () => null);
     final active = _isActive(o);
+    final status = '${o['status']}';
 
     void showTracker() => showEmberPopup(
       context,
@@ -318,15 +396,36 @@ class _OrderCard extends StatelessWidget {
       ),
     );
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.only(bottom: 24),
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEF2F6))),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Kit: "Food  Completed" line over a thin rule
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: _date(app, o['created_at']),
+                  style: Ember.text(14, color: Ember.navy),
+                ),
+                const TextSpan(text: '    '),
+                TextSpan(
+                  text: t('status_$status'),
+                  style: Ember.text(
+                    14,
+                    weight: FontWeight.w700,
+                    color: status == 'cancelled'
+                        ? Ember.red
+                        : active
+                        ? Ember.orange
+                        : Ember.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 32, color: Color(0xFFEEF2F6)),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -401,19 +500,6 @@ class _OrderCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      t('status_${o['status']}'),
-                      style: Ember.text(
-                        12,
-                        weight: FontWeight.w700,
-                        color: o['status'] == 'cancelled'
-                            ? Ember.red
-                            : active
-                            ? Ember.orange
-                            : Ember.green,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -421,22 +507,39 @@ class _OrderCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Row(
-            children: [
-              Expanded(
-                child: SmallButton(
-                  active ? t('track_order') : t('details'),
-                  onPressed: showTracker,
-                ),
-              ),
-              const SizedBox(width: 50),
-              Expanded(
-                child: SmallButton(
-                  t('details'),
-                  outline: true,
-                  onPressed: () => _showItems(context),
-                ),
-              ),
-            ],
+            children: active
+                ? [
+                    Expanded(
+                      child: SmallButton(
+                        t('track_order'),
+                        onPressed: showTracker,
+                      ),
+                    ),
+                    const SizedBox(width: 50),
+                    Expanded(
+                      child: SmallButton(
+                        t('details'),
+                        outline: true,
+                        onPressed: () => _showItems(context),
+                      ),
+                    ),
+                  ]
+                : [
+                    Expanded(
+                      child: SmallButton(
+                        t('rate'),
+                        outline: true,
+                        onPressed: () => _rate(context),
+                      ),
+                    ),
+                    const SizedBox(width: 50),
+                    Expanded(
+                      child: SmallButton(
+                        t('reorder'),
+                        onPressed: () => _reorder(context),
+                      ),
+                    ),
+                  ],
           ),
         ],
       ),

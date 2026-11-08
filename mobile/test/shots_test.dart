@@ -53,6 +53,21 @@ final shots = <String, (double, Widget Function())>{
   'login': (812, () => const LoginScreen()),
   'register': (812, () => const RegisterScreen()),
   'profile': (996, () => const ProfileScreen()),
+  'category': (812, () => const RestaurantsScreen(cuisine: 'pizza')),
+  'addresses': (812, () => const AddressesScreen()),
+  'add_address': (820, () => const AddAddressScreen()),
+  'success': (
+    812,
+    () => OrderSuccessScreen(
+      order: const {
+        'order_number': 'EM-MVXOBMJJ4E3A',
+        'restaurant_name': 'Napoli Wood Fire',
+        'total': 156,
+        'estimated_delivery': '25-35 min',
+        'fulfillment': 'delivery',
+      },
+    ),
+  ),
 };
 
 void main() {

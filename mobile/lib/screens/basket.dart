@@ -571,7 +571,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     Widget method(String value, IconData icon, String label) {
       final on = _payment == value;
-      return Expanded(
+      return SizedBox(
+        width: 85,
         child: Semantics(
           button: true,
           selected: on,
@@ -637,7 +638,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     return EmberScaffold(
-      header: TopBar(title: t('checkout_title')),
+      header: TopBar(title: t('payment')),
       bottom: Container(
         padding: EdgeInsets.fromLTRB(
           24,
@@ -670,7 +671,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 16),
             PrimaryButton(
-              t('place_order'),
+              t('pay_confirm'),
               loading: _busy,
               onPressed: cart.items.isEmpty ? null : _submit,
             ),
@@ -681,9 +682,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const SizedBox(height: 24),
         Row(
           children: [
-            method('cash', Icons.payments_outlined, t('pay_cash')),
-            const SizedBox(width: 16),
-            method('card', Icons.credit_card_rounded, t('pay_card')),
+            method('cash', Icons.payments_outlined, t('cash')),
+            const SizedBox(width: 13),
+            method('card', Icons.credit_card_rounded, t('card')),
           ],
         ),
         gap(),

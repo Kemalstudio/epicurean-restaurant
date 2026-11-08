@@ -82,6 +82,10 @@ final screens = <String, Widget Function()>{
     },
   ),
   'profile': () => const ProfileScreen(),
+  'search': () => const RestaurantsScreen(search: true),
+  'addresses': () => const AddressesScreen(),
+  'add_address': () => const AddAddressScreen(),
+  'personal_info': () => const PersonalInfoScreen(),
 };
 
 /// The test binding renders text with a stub font where every glyph is a 1em square,
